@@ -24,8 +24,7 @@
     "provenance": true,
     "registry": "https://registry.npmjs.org/"
   },
-  "devDependencies": {},
-  "peerDependencies": {
+  "dependencies": {
     "oxlint": "^1.56.0",
     "ultracite": "7.3.2"
   }
