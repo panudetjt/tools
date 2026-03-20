@@ -1,0 +1,22 @@
+{
+  "name": "@panudetjt/oxlint-config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "An opinionated oxlint config extended from ultracite",
+  "keywords": [
+    "fixer",
+    "formatter",
+    "linter",
+    "oxlint",
+    "ultracite"
+  ],
+  "type": "module",
+  "exports": {
+    "./oxlintrc.json": "./oxlintrc.json"
+  },
+  "devDependencies": {
+    "oxlint": "^1.56.0",
+    "typescript": "^5.9.2",
+    "ultracite": "7.3.2"
+  }
+}
