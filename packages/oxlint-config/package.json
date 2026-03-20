@@ -1,7 +1,6 @@
 {
   "name": "@panudetjt/oxlint-config",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.0.2",
   "description": "An opinionated oxlint config extended from ultracite",
   "keywords": [
     "fixer",
@@ -10,13 +9,23 @@
     "oxlint",
     "ultracite"
   ],
+  "license": "MIT",
+  "author": "Panudet <me@panudet.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panudetjt/tools.git"
+  },
   "type": "module",
   "exports": {
     "./oxlintrc.json": "./oxlintrc.json"
   },
-  "devDependencies": {
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {},
+  "peerDependencies": {
     "oxlint": "^1.56.0",
-    "typescript": "^5.9.2",
     "ultracite": "7.3.2"
   }
 }
