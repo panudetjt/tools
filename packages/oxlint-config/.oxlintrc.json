@@ -3,6 +3,7 @@
   "rules": {
     "no-void": ["error", { "allowAsStatement": true }],
     "func-style": "off",
-    "curly": ["error", "multi-line", "consistent"]
+    "curly": ["error", "multi-line", "consistent"],
+    "promise/prefer-await-to-callbacks": "off"
   }
 }
