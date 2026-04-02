@@ -168,9 +168,97 @@ async function extractAndSend() {
 
 figma.on("selectionchange", extractAndSend);
 
-figma.ui.on("message", (msg: { type: string }) => {
+async function createColorFrame(colors: ExtractedColor[]) {
+  if (colors.length === 0) return;
+
+  await Promise.all([
+    figma.loadFontAsync({ family: "Inter", style: "Regular" }),
+    figma.loadFontAsync({ family: "Inter", style: "Medium" }),
+    figma.loadFontAsync({ family: "Inter", style: "Semi Bold" }),
+  ]);
+
+  const SWATCH = 64;
+  const GAP = 16;
+  const PAD = 24;
+  const ROW_H = SWATCH + 28;
+  const FRAME_W = 420;
+  const COLS = 4;
+  const rows = Math.ceil(colors.length / COLS);
+
+  const frame = figma.createFrame();
+  frame.name = "Color Palette";
+  frame.resize(FRAME_W, PAD);
+  frame.fills = [{ color: { b: 1, g: 1, r: 1 }, type: "SOLID" }];
+  frame.cornerRadius = 8;
+
+  const title = figma.createText();
+  title.name = "Title";
+  title.characters = "Color Palette";
+  title.fontSize = 16;
+  title.fontName = { family: "Inter", style: "Semi Bold" };
+  title.x = PAD;
+  title.y = 12;
+  title.fills = [{ color: { b: 0.11, g: 0.11, r: 0.11 }, type: "SOLID" }];
+  frame.appendChild(title);
+
+  const contentY = 44;
+
+  for (let i = 0; i < colors.length; i += 1) {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const x = PAD + col * (SWATCH + GAP);
+    const y = contentY + row * ROW_H;
+    const c = colors[i];
+
+    const swatch = figma.createRectangle();
+    swatch.name = c.variableName || c.formats.hex;
+    swatch.resize(SWATCH, SWATCH);
+    swatch.x = x;
+    swatch.y = y;
+    swatch.cornerRadius = 8;
+    const hex = c.formats.hex.replace("#", "");
+    const cr = Number.parseInt(hex.slice(0, 2), 16) / 255;
+    const cg = Number.parseInt(hex.slice(2, 4), 16) / 255;
+    const cb = Number.parseInt(hex.slice(4, 6), 16) / 255;
+    swatch.fills = [{ color: { b: cb, g: cg, r: cr }, type: "SOLID" }];
+    frame.appendChild(swatch);
+
+    const label = figma.createText();
+    label.name = "Label";
+    label.characters = c.formats.hex.toUpperCase();
+    label.fontSize = 10;
+    label.fontName = { family: "Inter", style: "Medium" };
+    label.x = x;
+    label.y = y + SWATCH + 4;
+    label.fills = [{ color: { b: 0.4, g: 0.4, r: 0.4 }, type: "SOLID" }];
+    frame.appendChild(label);
+
+    if (c.variableName) {
+      const varName = figma.createText();
+      varName.name = "Variable";
+      varName.characters = c.variableName;
+      varName.fontSize = 8;
+      varName.fontName = { family: "Inter", style: "Regular" };
+      varName.x = x;
+      varName.y = y + SWATCH + 18;
+      varName.fills = [{ color: { b: 0.6, g: 0.6, r: 0.6 }, type: "SOLID" }];
+      frame.appendChild(varName);
+    }
+  }
+
+  const totalH = contentY + rows * ROW_H + PAD;
+  frame.resize(FRAME_W, totalH);
+
+  figma.viewport.scrollAndZoomIntoView([frame]);
+}
+
+figma.ui.on("message", (msg: { type: string; colors?: ExtractedColor[] }) => {
   if (msg.type === "extract-colors") {
     extractAndSend();
+  }
+
+  if (msg.type === "add-to-canvas" && msg.colors) {
+    createColorFrame(msg.colors);
   }
 
   if (msg.type === "cancel") {

@@ -84,6 +84,18 @@
     copyToClipboard(text);
   }
 
+  function addToCanvas() {
+    const data = filteredColors().map((c) => ({
+      formats: { ...c.formats },
+      nodeId: c.nodeId,
+      nodeName: c.nodeName,
+      property: c.property,
+      swatch: c.swatch,
+      variableName: c.variableName,
+    }));
+    postMessage("add-to-canvas", { colors: data });
+  }
+
   window.addEventListener("message", (event: MessageEvent) => {
     const msg = event.data.pluginMessage;
     if (msg.type === "colors") {
@@ -144,8 +156,15 @@
       {/each}
 
       <button
+        onclick={addToCanvas}
+        class="ml-auto rounded bg-emerald-600 px-2 py-1 text-xs text-white hover:bg-emerald-700"
+      >
+        Add to Canvas
+      </button>
+
+      <button
         onclick={copyAll}
-        class="ml-auto rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
+        class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
       >
         Copy All
       </button>
