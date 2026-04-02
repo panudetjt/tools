@@ -15,7 +15,7 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(import.meta.dirname, "src/ui/ui.html"),
     },
-    target: "esnext",
+    target: "baseline-widely-available",
   },
   plugins: [
     svelte(),

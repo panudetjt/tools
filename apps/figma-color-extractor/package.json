@@ -11,8 +11,7 @@
     "build:main": "tsdown",
     "build:ui": "vite build",
     "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch code.ts\"",
-    "lint": "oxlint --config .oxlintrc.json",
-    "lint:fix": "oxlint --config .oxlintrc.json --fix",
+    "fix": "ultracite fix",
     "watch": "npm run dev"
   },
   "devDependencies": {

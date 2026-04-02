@@ -1,37 +1,138 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
+interface ColorInfo {
+  name: string;
+  hex: string;
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
 
-// This file holds the main code for plugins. Code in this file has access to
-// the *figma document* via the figma global object.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
+interface ExtractedColor extends ColorInfo {
+  nodeId: string;
+  nodeName: string;
+  property: string;
+}
 
-// This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+function toHex(value: number): string {
+  return Math.round(value * 255)
+    .toString(16)
+    .padStart(2, "0");
+}
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = (msg: { type: string; count: number }) => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === "create-shapes") {
-    // This plugin creates rectangles on the screen.
-    const numberOfRectangles = msg.count;
+function paintToColor(paint: Paint): ColorInfo | null {
+  if (paint.type === "SOLID" && paint.color) {
+    const { r, g, b } = paint.color;
+    const a = paint.opacity === undefined ? 1 : paint.opacity;
+    return {
+      a,
+      b,
+      g,
+      hex: `#${toHex(r)}${toHex(g)}${toHex(b)}`,
+      name: "Solid",
+      r,
+    };
+  }
+  return null;
+}
 
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < numberOfRectangles; i += 1) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{ color: { b: 0, g: 0.5, r: 1 }, type: "SOLID" }];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
+function extractPaints(
+  paints: readonly Paint[],
+  nodeId: string,
+  nodeName: string,
+  property: string
+): ExtractedColor[] {
+  const results: ExtractedColor[] = [];
+  for (const paint of paints) {
+    const color = paintToColor(paint);
+    if (color) {
+      results.push({ ...color, nodeId, nodeName, property });
     }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
+  }
+  return results;
+}
+
+function getFills(node: SceneNode): readonly Paint[] | undefined {
+  const { fills } = node as MinimalFillsMixin;
+  return fills === figma.mixed ? undefined : fills;
+}
+
+function getStrokes(node: SceneNode): readonly Paint[] | undefined {
+  return (node as MinimalStrokesMixin).strokes;
+}
+
+function extractFills(
+  node: SceneNode,
+  property: string,
+  info: { nodeId: string; nodeName: string }
+): ExtractedColor[] {
+  const fills = getFills(node);
+  if (fills) {
+    return extractPaints(fills, info.nodeId, info.nodeName, property);
+  }
+  return [];
+}
+
+function extractStrokes(
+  node: SceneNode,
+  info: { nodeId: string; nodeName: string }
+): ExtractedColor[] {
+  const strokes = getStrokes(node);
+  if (strokes) {
+    return extractPaints(strokes, info.nodeId, info.nodeName, "stroke");
+  }
+  return [];
+}
+
+function extractFromNode(node: SceneNode): ExtractedColor[] {
+  const info = { nodeId: node.id, nodeName: node.name };
+  const results = [
+    ...extractFills(node, "fill", info),
+    ...extractStrokes(node, info),
+  ];
+
+  if (node.type === "TEXT") {
+    results.push(...extractFills(node, "text-color", info));
   }
 
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  figma.closePlugin();
+  return results;
+}
+
+function walkNode(node: SceneNode): ExtractedColor[] {
+  const results = [...extractFromNode(node)];
+
+  if ("children" in node) {
+    for (const child of (node as ChildrenMixin).children) {
+      results.push(...walkNode(child));
+    }
+  }
+
+  return results;
+}
+
+figma.showUI(__html__, { height: 480, width: 320 });
+
+figma.ui.onmessage = (msg: { type: string }) => {
+  if (msg.type === "extract-colors") {
+    const { selection } = figma.currentPage;
+
+    if (selection.length === 0) {
+      figma.ui.postMessage({
+        colors: [],
+        error: "No selection",
+        type: "colors",
+      });
+      return;
+    }
+
+    const colors: ExtractedColor[] = [];
+    for (const node of selection) {
+      colors.push(...walkNode(node));
+    }
+
+    figma.ui.postMessage({ colors, error: null, type: "colors" });
+  }
+
+  if (msg.type === "cancel") {
+    figma.closePlugin();
+  }
 };

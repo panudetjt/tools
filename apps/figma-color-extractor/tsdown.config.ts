@@ -7,4 +7,5 @@ export default defineConfig({
   name: "code",
   outDir: "dist",
   platform: "browser",
+  target: "es2015",
 });
