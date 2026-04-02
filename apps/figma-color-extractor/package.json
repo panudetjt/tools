@@ -7,18 +7,22 @@
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
-    "build": "npm run build:ui && npm run build:main",
+    "build": "bun run build:ui && bun run build:main",
     "build:main": "tsdown",
     "build:ui": "vite build",
-    "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch code.ts\"",
+    "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch src/main.ts\"",
     "fix": "ultracite fix",
-    "watch": "npm run dev"
+    "watch": "bun run dev"
+  },
+  "dependencies": {
+    "culori": "^4.0.2"
   },
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "*",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/culori": "^4.0.1",
     "concurrently": "^9.2.1",
     "oxlint": "^1.58.0",
     "svelte": "^5.0.0",

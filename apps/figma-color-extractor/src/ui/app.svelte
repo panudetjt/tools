@@ -1,20 +1,34 @@
 <script lang="ts">
+  interface ColorFormats {
+    hex: string;
+    hsl: string;
+    oklch: string;
+    rgb: string;
+  }
+
   interface ExtractedColor {
+    formats: ColorFormats;
     nodeId: string;
     nodeName: string;
     property: string;
-    name: string;
-    hex: string;
-    r: number;
-    g: number;
-    b: number;
-    a: number;
+    swatch: string;
+    variableName: string;
   }
+
+  type FormatKey = keyof ColorFormats;
 
   let colors = $state<ExtractedColor[]>([]);
   let error = $state<string | null>(null);
   let copiedId = $state<string | null>(null);
   let filterProperty = $state<string>("all");
+  let activeFormats = $state<Record<FormatKey, boolean>>({
+    hex: true,
+    hsl: false,
+    oklch: false,
+    rgb: true,
+  });
+
+  const FORMAT_KEYS: FormatKey[] = ["hex", "rgb", "hsl", "oklch"];
 
   function postMessage(type: string, data?: Record<string, unknown>) {
     parent.postMessage({ pluginMessage: { type, ...data } }, "*");
@@ -44,8 +58,8 @@
     ta.remove();
   }
 
-  function copyHex(hex: string, id: string) {
-    copyToClipboard(hex);
+  function copyValue(value: string, id: string) {
+    copyToClipboard(value);
     copiedId = id;
     setTimeout(() => {
       copiedId = null;
@@ -53,8 +67,9 @@
   }
 
   function copyAll() {
+    const key = activeFormats.hex ? "hex" : "rgb";
     const text = filteredColors()
-      .map((c) => c.hex)
+      .map((c) => c.formats[key])
       .join("\n");
     copyToClipboard(text);
   }
@@ -95,6 +110,20 @@
         <option value="text-color">Text</option>
       </select>
 
+      <!-- Format toggles -->
+      {#each FORMAT_KEYS as fmt}
+        <button
+          class="rounded px-1.5 py-0.5 text-xs font-medium transition-colors {activeFormats[
+            fmt
+          ]
+            ? 'bg-blue-100 text-blue-700'
+            : 'bg-gray-100 text-gray-400 hover:text-gray-600'}"
+          onclick={() => (activeFormats[fmt] = !activeFormats[fmt])}
+        >
+          {fmt.toUpperCase()}
+        </button>
+      {/each}
+
       <button
         onclick={copyAll}
         class="ml-auto rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
@@ -126,39 +155,51 @@
         <p class="text-xs text-gray-400">No colors to display</p>
       </div>
     {:else}
-      {#each filteredColors() as color (color.nodeId + color.property + color.hex)}
-        <button
-          class="flex w-full items-center gap-3 border-b border-gray-50 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
-          onclick={() =>
-            copyHex(color.hex, color.nodeId + color.property + color.hex)}
-          title="Click to copy"
-        >
-          <!-- Swatch -->
-          <div
-            class="h-8 w-8 shrink-0 rounded-md border border-gray-200"
-            style="background-color: {color.hex}; opacity: {color.a};"
-          ></div>
-
-          <!-- Info -->
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <span class="font-mono text-xs font-medium text-gray-900"
-                >{color.hex}</span
-              >
-              {#if copiedId === color.nodeId + color.property + color.hex}
-                <span class="text-xs text-green-600">Copied!</span>
-              {/if}
+      {#each filteredColors() as color (color.nodeId + color.property + color.swatch)}
+        {@const title = color.variableName || "Unlinked color"}
+        <div class="border-b border-gray-50 px-4 py-2.5">
+          <!-- Header row -->
+          <div class="flex items-center gap-3">
+            <div
+              class="h-8 w-8 shrink-0 rounded-md border border-gray-200"
+              style="background-color: {color.swatch};"
+            ></div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-medium text-gray-900">{title}</p>
+              <p class="truncate text-xs text-gray-400">{color.nodeName}</p>
             </div>
-            <p class="truncate text-xs text-gray-500">{color.nodeName}</p>
+            <span
+              class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
+            >
+              {color.property === "text-color" ? "text" : color.property}
+            </span>
           </div>
 
-          <!-- Property badge -->
-          <span
-            class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
-          >
-            {color.property === "text-color" ? "text" : color.property}
-          </span>
-        </button>
+          <!-- Format variants -->
+          <div class="mt-1 space-y-0.5 pl-11">
+            {#each FORMAT_KEYS as fmt}
+              {#if activeFormats[fmt]}
+                <button
+                  class="flex w-full items-center gap-1 rounded px-1.5 py-0.5 font-mono text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                  onclick={() =>
+                    copyValue(
+                      color.formats[fmt],
+                      color.nodeId + color.property + fmt,
+                    )}
+                  title="Click to copy"
+                >
+                  <span class="w-10 shrink-0 text-gray-400"
+                    >{fmt.toUpperCase()}</span
+                  >
+                  <span class="truncate">{color.formats[fmt]}</span>
+                  {#if copiedId === color.nodeId + color.property + fmt}
+                    <span class="shrink-0 text-green-600">Copied!</span>
+                  {/if}
+                </button>
+              {/if}
+            {/each}
+          </div>
+        </div>
       {/each}
     {/if}
   </div>
