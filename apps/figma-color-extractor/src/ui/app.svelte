@@ -21,6 +21,7 @@
   let error = $state<string | null>(null);
   let copiedId = $state<string | null>(null);
   let filterProperty = $state<string>("all");
+  let hideDuplicates = $state(true);
   let activeFormats = $state<Record<FormatKey, boolean>>({
     hex: true,
     hsl: false,
@@ -43,8 +44,17 @@
   }
 
   function filteredColors(): ExtractedColor[] {
-    if (filterProperty === "all") return colors;
-    return colors.filter((c) => c.property === filterProperty);
+    let result = colors;
+    if (filterProperty !== "all") result = result.filter((c) => c.property === filterProperty);
+    if (hideDuplicates) {
+      const seen = new Set<string>();
+      result = result.filter((c) => {
+        if (seen.has(c.swatch)) return false;
+        seen.add(c.swatch);
+        return true;
+      });
+    }
+    return result;
   }
 
   function copyToClipboard(text: string) {
@@ -111,6 +121,15 @@
       </select>
 
       <!-- Format toggles -->
+      <button
+        class="rounded px-1.5 py-0.5 text-xs font-medium transition-colors {hideDuplicates
+          ? 'bg-orange-100 text-orange-700'
+          : 'bg-gray-100 text-gray-400 hover:text-gray-600'}"
+        onclick={() => (hideDuplicates = !hideDuplicates)}
+        title="Hide duplicate colors"
+      >
+        Unique
+      </button>
       {#each FORMAT_KEYS as fmt}
         <button
           class="rounded px-1.5 py-0.5 text-xs font-medium transition-colors {activeFormats[
