@@ -24,7 +24,7 @@ figma.ui.onmessage = (msg: { type: string; count: number }) => {
       const rect = figma.createRectangle();
       rect.x = i * 150;
       rect.fills = [{ color: { b: 0, g: 0.5, r: 1 }, type: "SOLID" }];
-      figma.currentPage.append(rect);
+      figma.currentPage.appendChild(rect);
       nodes.push(rect);
     }
     figma.currentPage.selection = nodes;

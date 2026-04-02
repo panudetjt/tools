@@ -2,12 +2,12 @@
   "name": "Color Extractor",
   "id": "1621428294023657889",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "dist/main.js",
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
   "editorType": ["figma"],
-  "ui": "ui.html",
+  "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": ["none"]
   }

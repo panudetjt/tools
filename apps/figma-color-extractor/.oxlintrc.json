@@ -6,8 +6,9 @@
   "env": {
     "builtin": true
   },
-  "ignorePatterns": ["code.js", "dist", "eslint.config.js"],
+  "ignorePatterns": ["dist", "eslint.config.js"],
   "rules": {
-    "unicorn/prefer-add-event-listener": "off"
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/prefer-dom-node-append": "off"
   }
 }

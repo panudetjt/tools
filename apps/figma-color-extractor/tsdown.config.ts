@@ -2,9 +2,9 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   clean: false,
-  entry: ["code.ts"],
+  entry: ["src/main.ts"],
   format: ["esm"],
   name: "code",
-  outDir: ".",
+  outDir: "dist",
   platform: "browser",
 });
