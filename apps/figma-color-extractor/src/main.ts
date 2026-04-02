@@ -1,6 +1,6 @@
 interface ColorInfo {
-  name: string;
   hex: string;
+  name: string;
   r: number;
   g: number;
   b: number;
@@ -19,33 +19,58 @@ function toHex(value: number): string {
     .padStart(2, "0");
 }
 
-function paintToColor(paint: Paint): ColorInfo | null {
+async function resolveColorName(
+  node: SceneNode,
+  paint: Paint,
+  index: number,
+  field: "fills" | "strokes"
+): Promise<string> {
+  const bv = node.boundVariables;
+  if (bv) {
+    const aliases = bv[field];
+    if (aliases && aliases[index]) {
+      const v = await figma.variables.getVariableByIdAsync(aliases[index].id);
+      if (v) return v.name;
+    }
+  }
+  return "";
+}
+
+async function paintToColor(
+  node: SceneNode,
+  paint: Paint,
+  index: number,
+  field: "fills" | "strokes"
+): Promise<ColorInfo | null> {
   if (paint.type === "SOLID" && paint.color) {
     const { r, g, b } = paint.color;
     const a = paint.opacity === undefined ? 1 : paint.opacity;
+    const colorName = await resolveColorName(node, paint, index, field);
     return {
       a,
       b,
       g,
       hex: `#${toHex(r)}${toHex(g)}${toHex(b)}`,
-      name: "Solid",
+      name: colorName,
       r,
     };
   }
   return null;
 }
 
-function extractPaints(
+async function extractPaints(
+  node: SceneNode,
   paints: readonly Paint[],
-  nodeId: string,
-  nodeName: string,
-  property: string
-): ExtractedColor[] {
+  property: string,
+  field: "fills" | "strokes"
+): Promise<ExtractedColor[]> {
   const results: ExtractedColor[] = [];
-  for (const paint of paints) {
-    const color = paintToColor(paint);
+  for (let i = 0; i < paints.length; i += 1) {
+    const color = await paintToColor(node, paints[i], i, field);
     if (color) {
-      results.push({ ...color, nodeId, nodeName, property });
+      const { name } = color;
+      const nodeName = name ? `${node.name} / ${name}` : node.name;
+      results.push({ ...color, nodeId: node.id, nodeName, property });
     }
   }
   return results;
@@ -60,49 +85,44 @@ function getStrokes(node: SceneNode): readonly Paint[] | undefined {
   return (node as MinimalStrokesMixin).strokes;
 }
 
-function extractFills(
+async function extractFills(
   node: SceneNode,
-  property: string,
-  info: { nodeId: string; nodeName: string }
-): ExtractedColor[] {
+  property: string
+): Promise<ExtractedColor[]> {
   const fills = getFills(node);
   if (fills) {
-    return extractPaints(fills, info.nodeId, info.nodeName, property);
+    return await extractPaints(node, fills, property, "fills");
   }
   return [];
 }
 
-function extractStrokes(
-  node: SceneNode,
-  info: { nodeId: string; nodeName: string }
-): ExtractedColor[] {
+async function extractStrokes(node: SceneNode): Promise<ExtractedColor[]> {
   const strokes = getStrokes(node);
   if (strokes) {
-    return extractPaints(strokes, info.nodeId, info.nodeName, "stroke");
+    return await extractPaints(node, strokes, "stroke", "strokes");
   }
   return [];
 }
 
-function extractFromNode(node: SceneNode): ExtractedColor[] {
-  const info = { nodeId: node.id, nodeName: node.name };
+async function extractFromNode(node: SceneNode): Promise<ExtractedColor[]> {
   const results = [
-    ...extractFills(node, "fill", info),
-    ...extractStrokes(node, info),
+    ...(await extractFills(node, "fill")),
+    ...(await extractStrokes(node)),
   ];
 
   if (node.type === "TEXT") {
-    results.push(...extractFills(node, "text-color", info));
+    results.push(...(await extractFills(node, "text-color")));
   }
 
   return results;
 }
 
-function walkNode(node: SceneNode): ExtractedColor[] {
-  const results = [...extractFromNode(node)];
+async function walkNode(node: SceneNode): Promise<ExtractedColor[]> {
+  const results = [...(await extractFromNode(node))];
 
   if ("children" in node) {
     for (const child of (node as ChildrenMixin).children) {
-      results.push(...walkNode(child));
+      results.push(...(await walkNode(child)));
     }
   }
 
@@ -111,25 +131,31 @@ function walkNode(node: SceneNode): ExtractedColor[] {
 
 figma.showUI(__html__, { height: 480, width: 320 });
 
+async function extractAndSend() {
+  const { selection } = figma.currentPage;
+
+  if (selection.length === 0) {
+    figma.ui.postMessage({
+      colors: [],
+      error: "No selection",
+      type: "colors",
+    });
+    return;
+  }
+
+  const colors: ExtractedColor[] = [];
+  for (const node of selection) {
+    colors.push(...(await walkNode(node)));
+  }
+
+  figma.ui.postMessage({ colors, error: null, type: "colors" });
+}
+
+figma.on("selectionchange", extractAndSend);
+
 figma.ui.on("message", (msg: { type: string }) => {
   if (msg.type === "extract-colors") {
-    const { selection } = figma.currentPage;
-
-    if (selection.length === 0) {
-      figma.ui.postMessage({
-        colors: [],
-        error: "No selection",
-        type: "colors",
-      });
-      return;
-    }
-
-    const colors: ExtractedColor[] = [];
-    for (const node of selection) {
-      colors.push(...walkNode(node));
-    }
-
-    figma.ui.postMessage({ colors, error: null, type: "colors" });
+    extractAndSend();
   }
 
   if (msg.type === "cancel") {
