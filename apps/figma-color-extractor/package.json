@@ -4,17 +4,19 @@
   "description": "Your Figma Plugin",
   "license": "MIT",
   "author": "Panudet <me@panudet.dev>",
+  "type": "module",
   "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsdown",
     "lint": "oxlint --config .oxlintrc.json",
     "lint:fix": "oxlint --config .oxlintrc.json --fix",
-    "watch": "npm run build -- --watch"
+    "watch": "tsdown --watch code.ts"
   },
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "*",
     "oxlint": "^1.58.0",
+    "tsdown": "^0.21.7",
     "typescript": "^5.9.3"
   }
 }
