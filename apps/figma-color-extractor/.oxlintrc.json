@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.json"],
+  "plugins": ["typescript"],
+  "jsPlugins": ["@figma/eslint-plugin-figma-plugins"],
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["code.js", "dist", "eslint.config.js"],
+  "rules": {
+    "unicorn/prefer-add-event-listener": "off"
+  }
+}
