@@ -8,8 +8,6 @@
   },
   "ignorePatterns": ["dist"],
   "rules": {
-    "unicorn/prefer-add-event-listener": "off",
-    "unicorn/prefer-dom-node-append": "off",
     "unicorn/require-post-message-target-origin": "off"
   },
   "overrides": [

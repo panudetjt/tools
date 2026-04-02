@@ -33,8 +33,19 @@
     return colors.filter((c) => c.property === filterProperty);
   }
 
+  function copyToClipboard(text: string) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.append(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+
   function copyHex(hex: string, id: string) {
-    navigator.clipboard.writeText(hex);
+    copyToClipboard(hex);
     copiedId = id;
     setTimeout(() => {
       copiedId = null;
@@ -45,16 +56,16 @@
     const text = filteredColors()
       .map((c) => c.hex)
       .join("\n");
-    navigator.clipboard.writeText(text);
+    copyToClipboard(text);
   }
 
-  window.onmessage = (event: MessageEvent) => {
+  window.addEventListener("message", (event: MessageEvent) => {
     const msg = event.data.pluginMessage;
     if (msg.type === "colors") {
       colors = msg.colors ?? [];
       error = msg.error ?? null;
     }
-  };
+  });
 
   // Auto-extract on load
   $effect(() => {
@@ -118,7 +129,8 @@
       {#each filteredColors() as color (color.nodeId + color.property + color.hex)}
         <button
           class="flex w-full items-center gap-3 border-b border-gray-50 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
-          onclick={() => copyHex(color.hex, color.nodeId + color.property + color.hex)}
+          onclick={() =>
+            copyHex(color.hex, color.nodeId + color.property + color.hex)}
           title="Click to copy"
         >
           <!-- Swatch -->
@@ -130,7 +142,9 @@
           <!-- Info -->
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5">
-              <span class="font-mono text-xs font-medium text-gray-900">{color.hex}</span>
+              <span class="font-mono text-xs font-medium text-gray-900"
+                >{color.hex}</span
+              >
               {#if copiedId === color.nodeId + color.property + color.hex}
                 <span class="text-xs text-green-600">Copied!</span>
               {/if}
@@ -139,7 +153,9 @@
           </div>
 
           <!-- Property badge -->
-          <span class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+          <span
+            class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
+          >
             {color.property === "text-color" ? "text" : color.property}
           </span>
         </button>

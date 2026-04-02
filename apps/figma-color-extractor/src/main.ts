@@ -111,7 +111,7 @@ function walkNode(node: SceneNode): ExtractedColor[] {
 
 figma.showUI(__html__, { height: 480, width: 320 });
 
-figma.ui.onmessage = (msg: { type: string }) => {
+figma.ui.on("message", (msg: { type: string }) => {
   if (msg.type === "extract-colors") {
     const { selection } = figma.currentPage;
 
@@ -135,4 +135,4 @@ figma.ui.onmessage = (msg: { type: string }) => {
   if (msg.type === "cancel") {
     figma.closePlugin();
   }
-};
+});
