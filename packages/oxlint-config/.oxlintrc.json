@@ -4,6 +4,7 @@
     "no-void": ["error", { "allowAsStatement": true }],
     "func-style": "off",
     "curly": ["error", "multi-line", "consistent"],
-    "promise/prefer-await-to-callbacks": "off"
+    "promise/prefer-await-to-callbacks": "off",
+    "no-inline-comments": "off"
   }
 }
