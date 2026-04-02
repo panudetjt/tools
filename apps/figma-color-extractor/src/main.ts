@@ -1,26 +1,5 @@
-import {
-  converter,
-  formatCss,
-  formatHex,
-  formatHex8,
-  formatRgb,
-  modeHsl,
-  modeOklch,
-  useMode,
-} from "culori/fn";
-import type { Rgb } from "culori/fn";
-
-const toHsl = converter("hsl");
-const toOklch = converter("oklch");
-const hslMode = useMode(modeHsl);
-const oklchMode = useMode(modeOklch);
-
-interface ColorFormats {
-  hex: string;
-  hsl: string;
-  oklch: string;
-  rgb: string;
-}
+import type { ColorFormats } from "./color";
+import { paintToColor } from "./color";
 
 interface ExtractedColor {
   formats: ColorFormats;
@@ -31,7 +10,7 @@ interface ExtractedColor {
   variableName: string;
 }
 
-async function resolveColorName(
+export async function resolveColorName(
   node: SceneNode,
   index: number,
   field: "fills" | "strokes"
@@ -47,28 +26,7 @@ async function resolveColorName(
   return "";
 }
 
-function paintToColor(
-  paint: Paint
-): { formats: ColorFormats; swatch: string } | null {
-  if (paint.type === "SOLID" && paint.color) {
-    const { r, g, b } = paint.color;
-    const a = paint.opacity === undefined ? 1 : paint.opacity;
-    const rgb: Rgb = { alpha: a, b, g, mode: "rgb", r };
-    const hasAlpha = a < 1;
-    return {
-      formats: {
-        hex: hasAlpha ? formatHex8(rgb) : formatHex(rgb),
-        hsl: formatCss(hslMode(toHsl(rgb))),
-        oklch: formatCss(oklchMode(toOklch(rgb))),
-        rgb: formatRgb(rgb),
-      },
-      swatch: hasAlpha ? formatHex8(rgb) : formatHex(rgb),
-    };
-  }
-  return null;
-}
-
-async function extractPaints(
+export async function extractPaints(
   node: SceneNode,
   paints: readonly Paint[],
   property: string,
@@ -76,7 +34,9 @@ async function extractPaints(
 ): Promise<ExtractedColor[]> {
   const results: ExtractedColor[] = [];
   for (let i = 0; i < paints.length; i += 1) {
-    const color = paintToColor(paints[i]);
+    const paint = paints[i];
+    if (!paint) continue;
+    const color = paintToColor(paint);
     if (color) {
       const variableName = await resolveColorName(node, i, field);
       results.push({
@@ -91,35 +51,37 @@ async function extractPaints(
   return results;
 }
 
-function getFills(node: SceneNode): readonly Paint[] | undefined {
+export function getFills(node: SceneNode): readonly Paint[] | undefined {
   const { fills } = node as MinimalFillsMixin;
   return fills === figma.mixed ? undefined : fills;
 }
 
-function getStrokes(node: SceneNode): readonly Paint[] | undefined {
+export function getStrokes(node: SceneNode): readonly Paint[] | undefined {
   return (node as MinimalStrokesMixin).strokes;
 }
 
-async function extractFills(
+export function extractFills(
   node: SceneNode,
   property: string
 ): Promise<ExtractedColor[]> {
   const fills = getFills(node);
   if (fills) {
-    return await extractPaints(node, fills, property, "fills");
+    return extractPaints(node, fills, property, "fills");
   }
-  return [];
+  return Promise.resolve([]);
 }
 
-async function extractStrokes(node: SceneNode): Promise<ExtractedColor[]> {
+export function extractStrokes(node: SceneNode): Promise<ExtractedColor[]> {
   const strokes = getStrokes(node);
   if (strokes) {
-    return await extractPaints(node, strokes, "stroke", "strokes");
+    return extractPaints(node, strokes, "stroke", "strokes");
   }
-  return [];
+  return Promise.resolve([]);
 }
 
-async function extractFromNode(node: SceneNode): Promise<ExtractedColor[]> {
+export async function extractFromNode(
+  node: SceneNode
+): Promise<ExtractedColor[]> {
   const results = [
     ...(await extractFills(node, "fill")),
     ...(await extractStrokes(node)),
@@ -132,7 +94,7 @@ async function extractFromNode(node: SceneNode): Promise<ExtractedColor[]> {
   return results;
 }
 
-async function walkNode(node: SceneNode): Promise<ExtractedColor[]> {
+export async function walkNode(node: SceneNode): Promise<ExtractedColor[]> {
   const results = [...(await extractFromNode(node))];
 
   if ("children" in node) {
@@ -209,6 +171,7 @@ async function createColorFrame(colors: ExtractedColor[]) {
     const x = PAD + col * (SWATCH + GAP);
     const y = contentY + row * ROW_H;
     const c = colors[i];
+    if (!c) continue;
 
     const swatch = figma.createRectangle();
     swatch.name = c.variableName || c.formats.hex;
@@ -254,11 +217,11 @@ async function createColorFrame(colors: ExtractedColor[]) {
 
 figma.ui.on("message", (msg: { type: string; colors?: ExtractedColor[] }) => {
   if (msg.type === "extract-colors") {
-    extractAndSend();
+    void extractAndSend();
   }
 
   if (msg.type === "add-to-canvas" && msg.colors) {
-    createColorFrame(msg.colors);
+    void createColorFrame(msg.colors);
   }
 
   if (msg.type === "cancel") {
