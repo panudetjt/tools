@@ -133,7 +133,7 @@ export async function walkNode(node: SceneNode): Promise<ExtractedColor[]> {
   return results;
 }
 
-figma.showUI(__html__, { height: 480, width: 320 });
+figma.showUI(__html__, { height: 480, themeColors: true, width: 320 });
 
 async function extractAndSend() {
   const { selection } = figma.currentPage;

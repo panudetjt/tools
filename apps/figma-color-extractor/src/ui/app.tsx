@@ -203,7 +203,7 @@ function CheckIcon() {
       height="10"
       viewBox="0 0 10 10"
       fill="none"
-      stroke="white"
+      stroke="currentColor"
       strokeWidth="2"
     >
       <path d="M2 5l2 2 4-5" />
@@ -258,7 +258,7 @@ function EmptyIcon() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="mx-auto text-gray-300"
+      className="mx-auto text-fg-muted"
     >
       <circle cx="12" cy="12" r="10" />
       <path d="M12 16v-4" />
@@ -340,23 +340,23 @@ function FormatRow({
   onDownload?: () => void;
 }) {
   return (
-    <div className="flex w-full min-w-0 items-center gap-1 rounded-md px-2 py-1.5 font-mono text-[11px] text-gray-500 transition-colors duration-150 hover:bg-indigo-50 hover:text-gray-700">
+    <div className="flex w-full min-w-0 items-center gap-1 rounded-md px-2 py-1.5 font-mono text-[11px] text-fg-dim transition-colors duration-150 hover:bg-surface-selected hover:text-fg">
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center gap-2 cursor-pointer"
         onClick={() => copyValue(value, copyId)}
         title={value}
       >
-        <span className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <span className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-fg-muted">
           {label}
         </span>
         <span className="truncate">{value}</span>
         {copiedId === copyId ? (
-          <span className="shrink-0 text-[10px] font-medium text-emerald-600">
+          <span className="shrink-0 text-[10px] font-medium text-fg-success">
             Copied
           </span>
         ) : (
-          <span className="shrink-0 text-gray-500">
+          <span className="shrink-0 text-fg-dim">
             <CopyIcon size={11} />
           </span>
         )}
@@ -364,7 +364,7 @@ function FormatRow({
       {onDownload && (
         <button
           type="button"
-          className="shrink-0 rounded p-0.5 text-gray-500 transition-colors duration-150 hover:text-indigo-600 cursor-pointer"
+          className="shrink-0 rounded p-0.5 text-fg-dim transition-colors duration-150 hover:text-fg-brand cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onDownload();
@@ -380,7 +380,7 @@ function FormatRow({
 
 // --- Hoisted static JSX ---
 
-const TOOLBAR_DIVIDER = <div className="mx-0.5 h-4 w-px bg-gray-200" />;
+const TOOLBAR_DIVIDER = <div className="mx-0.5 h-4 w-px bg-edge" />;
 
 // --- Gradient Card ---
 
@@ -398,10 +398,10 @@ const GradientCard = memo(function GradientCard({
 
   return (
     <div
-      className={`mb-1.5 rounded-lg border bg-white transition-colors duration-150 ${
+      className={`mb-1.5 rounded-lg border bg-surface transition-colors duration-150 ${
         isSelected
-          ? "border-indigo-200 ring-1 ring-indigo-100"
-          : "border-gray-100 hover:border-gray-200"
+          ? "border-edge-selected ring-1 ring-surface-selected"
+          : "border-edge hover:border-edge"
       }`}
     >
       <div className="flex items-center gap-2.5 px-2.5 py-2">
@@ -410,28 +410,26 @@ const GradientCard = memo(function GradientCard({
           onClick={() => toggleSelection(cardId)}
           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors duration-150 cursor-pointer ${
             isSelected
-              ? "bg-indigo-600"
-              : "border border-gray-300 hover:border-gray-400"
+              ? "bg-surface-brand text-fg-onbrand"
+              : "border border-edge-strong hover:border-edge-strong"
           }`}
         >
           {isSelected && <CheckIcon />}
         </button>
 
         <div
-          className="h-7 w-12 shrink-0 rounded-md border border-gray-100 shadow-sm"
+          className="h-7 w-12 shrink-0 rounded-md border border-edge shadow-sm"
           style={{ background: color.gradient }}
         />
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium text-gray-800">
-            {title}
-          </p>
-          <p className="truncate text-[10px] text-gray-400">gradient</p>
+          <p className="truncate text-[11px] font-medium text-fg">{title}</p>
+          <p className="truncate text-[10px] text-fg-muted">gradient</p>
         </div>
 
         <button
           type="button"
-          className="shrink-0 rounded-md p-1 text-gray-300 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-500 cursor-pointer"
+          className="shrink-0 rounded-md p-1 text-fg-muted transition-colors duration-150 hover:bg-surface-selected hover:text-fg-brand cursor-pointer"
           onClick={() => copyValue(color.gradient ?? "", `${cardId}-export`)}
           title="Copy gradient CSS"
         >
@@ -439,7 +437,7 @@ const GradientCard = memo(function GradientCard({
         </button>
       </div>
 
-      <div className="border-t border-gray-50 px-2.5 py-1">
+      <div className="border-t border-edge px-2.5 py-1">
         <FormatRow
           label="css"
           value={color.gradient ?? ""}
@@ -468,10 +466,10 @@ const ColorCard = memo(function ColorCard({
 
   return (
     <div
-      className={`mb-1.5 rounded-lg border bg-white transition-colors duration-150 ${
+      className={`mb-1.5 rounded-lg border bg-surface transition-colors duration-150 ${
         isSelected
-          ? "border-indigo-200 ring-1 ring-indigo-100"
-          : "border-gray-100 hover:border-gray-200"
+          ? "border-edge-selected ring-1 ring-surface-selected"
+          : "border-edge hover:border-edge"
       }`}
     >
       <div className="flex items-center gap-2.5 px-2.5 py-2">
@@ -480,30 +478,28 @@ const ColorCard = memo(function ColorCard({
           onClick={() => toggleSelection(cardId)}
           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors duration-150 cursor-pointer ${
             isSelected
-              ? "bg-indigo-600"
-              : "border border-gray-300 hover:border-gray-400"
+              ? "bg-surface-brand text-fg-onbrand"
+              : "border border-edge-strong hover:border-edge-strong"
           }`}
         >
           {isSelected && <CheckIcon />}
         </button>
 
         <div
-          className="h-7 w-7 shrink-0 rounded-md border border-gray-100 shadow-sm"
+          className="h-7 w-7 shrink-0 rounded-md border border-edge shadow-sm"
           style={{ backgroundColor: color.swatch }}
         />
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium text-gray-800">
-            {title}
-          </p>
-          <p className="truncate text-[10px] text-gray-400">
+          <p className="truncate text-[11px] font-medium text-fg">{title}</p>
+          <p className="truncate text-[10px] text-fg-muted">
             {color.property === "text-color" ? "text" : color.property}
           </p>
         </div>
 
         <button
           type="button"
-          className="shrink-0 rounded-md p-1 text-gray-300 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-500 cursor-pointer"
+          className="shrink-0 rounded-md p-1 text-fg-muted transition-colors duration-150 hover:bg-surface-selected hover:text-fg-brand cursor-pointer"
           onClick={() =>
             $exportModal.set({
               color,
@@ -517,7 +513,7 @@ const ColorCard = memo(function ColorCard({
         </button>
       </div>
 
-      <div className="border-t border-gray-50 px-2.5 py-1">
+      <div className="border-t border-edge px-2.5 py-1">
         {FORMAT_KEYS.map((fmt) =>
           activeFormats[fmt] ? (
             <FormatRow
@@ -576,13 +572,13 @@ const Toolbar = memo(function Toolbar() {
   }
 
   return (
-    <div className="border-b border-gray-100 bg-white px-3 py-2">
+    <div className="border-b border-edge bg-surface px-3 py-2">
       {/* Row 1: Filters + formats */}
       <div className="flex items-center gap-1.5">
         <select
           value={filterProperty}
           onChange={(e) => $filterProperty.set(e.currentTarget.value)}
-          className="h-6 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-600 transition-colors duration-150 hover:border-gray-300 focus:border-indigo-400 focus:outline-none cursor-pointer"
+          className="h-6 rounded-md border border-edge bg-surface px-2 text-[11px] text-fg-dim transition-colors duration-150 hover:border-edge-strong focus:border-edge-selected focus:outline-none cursor-pointer"
         >
           <option value="all">All</option>
           <option value="fill">Fills</option>
@@ -594,8 +590,8 @@ const Toolbar = memo(function Toolbar() {
           type="button"
           className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
             hideDuplicates
-              ? "bg-indigo-100 text-indigo-700"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              ? "bg-surface-active text-fg-brand"
+              : "text-fg-muted hover:bg-surface-dim hover:text-fg"
           }`}
           onClick={() => $hideDuplicates.set(!hideDuplicates)}
           title="Hide duplicate colors"
@@ -608,8 +604,8 @@ const Toolbar = memo(function Toolbar() {
             type="button"
             className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
               mergeAlpha
-                ? "bg-indigo-100 text-indigo-700"
-                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                ? "bg-surface-active text-fg-brand"
+                : "text-fg-muted hover:bg-surface-dim hover:text-fg"
             }`}
             onClick={() => $mergeAlpha.set(!mergeAlpha)}
             title="Merge colors that differ only in opacity"
@@ -622,8 +618,8 @@ const Toolbar = memo(function Toolbar() {
           type="button"
           className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
             gradientMode
-              ? "bg-indigo-100 text-indigo-700"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              ? "bg-surface-active text-fg-brand"
+              : "text-fg-muted hover:bg-surface-dim hover:text-fg"
           }`}
           onClick={() => $gradientMode.set(!gradientMode)}
           title="Show CSS gradients"
@@ -640,8 +636,8 @@ const Toolbar = memo(function Toolbar() {
             type="button"
             className={`h-6 rounded-md px-1.5 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
               activeFormats[fmt]
-                ? "bg-gray-900 text-white"
-                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                ? "bg-surface-active text-fg-brand"
+                : "text-fg-muted hover:bg-surface-dim hover:text-fg"
             }`}
             onClick={() => toggleFormat(fmt)}
           >
@@ -654,7 +650,7 @@ const Toolbar = memo(function Toolbar() {
         <button
           type="button"
           onClick={() => postMessage("extract-colors")}
-          className="h-6 rounded-md bg-gray-900 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-gray-700 cursor-pointer"
+          className="h-6 rounded-md bg-surface-brand px-2 text-[11px] font-medium text-fg-onbrand transition-colors duration-150 hover:bg-surface-brand-hover cursor-pointer"
           title="Refresh colors"
         >
           <RefreshIcon />
@@ -667,8 +663,8 @@ const Toolbar = memo(function Toolbar() {
           type="button"
           className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
             allSelected
-              ? "bg-indigo-100 text-indigo-700"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              ? "bg-surface-active text-fg-brand"
+              : "text-fg-muted hover:bg-surface-dim hover:text-fg"
           }`}
           onClick={toggleSelectAll}
         >
@@ -680,14 +676,14 @@ const Toolbar = memo(function Toolbar() {
             <button
               type="button"
               onClick={handleCanvas}
-              className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
+              className="h-6 rounded-md bg-surface-brand px-2 text-[11px] font-medium text-fg-onbrand transition-colors duration-150 hover:bg-surface-brand-hover cursor-pointer"
             >
               Canvas
             </button>
             <button
               type="button"
               onClick={() => $exportModal.set({ type: "bulk" })}
-              className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
+              className="h-6 rounded-md bg-surface-brand px-2 text-[11px] font-medium text-fg-onbrand transition-colors duration-150 hover:bg-surface-brand-hover cursor-pointer"
             >
               Export
             </button>
@@ -698,7 +694,7 @@ const Toolbar = memo(function Toolbar() {
           <button
             type="button"
             onClick={handleCopyAll}
-            className="h-6 rounded-md bg-gray-100 px-2 text-[11px] font-medium text-gray-600 transition-colors duration-150 hover:bg-gray-200 cursor-pointer"
+            className="h-6 rounded-md bg-surface-dim px-2 text-[11px] font-medium text-fg-dim transition-colors duration-150 hover:bg-surface-raised cursor-pointer"
           >
             Copy All
           </button>
@@ -714,15 +710,15 @@ const SelectionBar = memo(function SelectionBar() {
   if (selectedColors.length === 0) return null;
 
   return (
-    <div className="border-t border-indigo-200 bg-indigo-50/60 px-3 py-2">
+    <div className="border-t border-edge-selected bg-surface-selected px-3 py-2">
       <div className="flex items-center gap-2">
-        <span className="text-[11px] font-semibold text-indigo-700">
+        <span className="text-[11px] font-semibold text-fg-brand">
           {selectedColors.length} selected
         </span>
         <div className="flex-1" />
         <button
           type="button"
-          className="text-[11px] text-indigo-400 transition-colors duration-150 hover:text-indigo-600 cursor-pointer"
+          className="text-[11px] text-fg-dim transition-colors duration-150 hover:text-fg-brand cursor-pointer"
           onClick={clearSelection}
         >
           Clear
@@ -737,7 +733,7 @@ const SelectionBar = memo(function SelectionBar() {
 function ModalOverlay({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 transition-opacity"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-surface-overlay transition-opacity"
       onClick={() => $exportModal.set(null)}
       onKeyDown={(e) => {
         if (e.key === "Escape") $exportModal.set(null);
@@ -745,7 +741,7 @@ function ModalOverlay({ children }: { children: React.ReactNode }) {
       role="presentation"
     >
       <div
-        className="w-full max-w-76 rounded-t-2xl bg-white shadow-xl"
+        className="w-full max-w-76 rounded-t-2xl bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape") $exportModal.set(null);
@@ -760,12 +756,12 @@ function ModalOverlay({ children }: { children: React.ReactNode }) {
 
 function ModalHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+    <div className="flex items-center justify-between border-b border-edge px-4 py-3">
       <div className="flex items-center gap-2">{children}</div>
       <button
         type="button"
         onClick={() => $exportModal.set(null)}
-        className="rounded-md p-1 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
+        className="rounded-md p-1 text-fg-muted transition-colors duration-150 hover:bg-surface-dim hover:text-fg cursor-pointer"
       >
         <CloseIcon />
       </button>
@@ -779,16 +775,16 @@ function FormatPicker() {
 
   return (
     <>
-      <div className="flex items-center gap-1 border-b border-gray-50 px-4 py-1.5">
-        <span className="mr-1 text-[10px] text-gray-400">Format:</span>
+      <div className="flex items-center gap-1 border-b border-edge px-4 py-1.5">
+        <span className="mr-1 text-[10px] text-fg-muted">Format:</span>
         {FORMAT_KEYS.map((fmt) => (
           <button
             key={fmt}
             type="button"
             className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
               exportFormat === fmt
-                ? "bg-gray-900 text-white"
-                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                ? "bg-surface-active text-fg-brand"
+                : "text-fg-muted hover:bg-surface-dim hover:text-fg"
             }`}
             onClick={() => $exportFormat.set(fmt)}
           >
@@ -796,15 +792,15 @@ function FormatPicker() {
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap gap-1 border-b border-gray-50 px-4 py-2">
+      <div className="flex flex-wrap gap-1 border-b border-edge px-4 py-2">
         {LANGUAGES.map((lang) => (
           <button
             key={lang}
             type="button"
             className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
               exportLang === lang
-                ? "bg-indigo-600 text-white"
-                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                ? "bg-surface-brand text-fg-onbrand"
+                : "text-fg-muted hover:bg-surface-dim hover:text-fg"
             }`}
             onClick={() => $exportLang.set(lang)}
           >
@@ -842,10 +838,10 @@ function SingleExportModal({
     <ModalOverlay>
       <ModalHeader>
         <div
-          className="h-5 w-5 rounded border border-gray-100 shadow-sm"
+          className="h-5 w-5 rounded border border-edge shadow-sm"
           style={{ background: color.swatch }}
         />
-        <h3 className="text-[12px] font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-[12px] font-semibold text-fg">{title}</h3>
       </ModalHeader>
       <FormatPicker />
       <div className="max-h-70 overflow-y-auto px-2 py-1.5">
@@ -889,7 +885,7 @@ function BulkExportModal() {
   return (
     <ModalOverlay>
       <ModalHeader>
-        <h3 className="text-[12px] font-semibold text-gray-900">
+        <h3 className="text-[12px] font-semibold text-fg">
           {selectedColors.length} color
           {selectedColors.length === 1 ? "" : "s"}
         </h3>
@@ -898,7 +894,7 @@ function BulkExportModal() {
         {selectedColors.map((c) => (
           <div
             key={getCardId(c)}
-            className="h-5 w-5 shrink-0 rounded border border-gray-100 shadow-sm"
+            className="h-5 w-5 shrink-0 rounded border border-edge shadow-sm"
             style={{ background: c.swatch }}
             title={c.variableName || c.nodeName || "Unlinked"}
           />
@@ -933,16 +929,14 @@ export default function App() {
   const exportModal = useStore($exportModal);
 
   return (
-    <div className="flex h-full flex-col bg-[#FAFAFA] text-gray-800">
+    <div className="flex h-full flex-col bg-surface-dim text-fg">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-4 py-3">
+      <div className="border-b border-edge bg-surface px-4 py-3">
         <div className="flex items-center gap-2">
           <SwatchIcon />
-          <h2 className="text-[13px] font-semibold text-gray-900">
-            Color Extractor
-          </h2>
+          <h2 className="text-[13px] font-semibold text-fg">Color Extractor</h2>
         </div>
-        <p className="mt-0.5 text-[11px] text-gray-400">
+        <p className="mt-0.5 text-[11px] text-fg-muted">
           {colors.length} color{colors.length === 1 ? "" : "s"} extracted
         </p>
       </div>
@@ -954,8 +948,8 @@ export default function App() {
       {error && (
         <div className="flex flex-col items-center justify-center px-4 py-10">
           <EmptyIcon />
-          <p className="mt-3 text-[11px] text-gray-400">{error}</p>
-          <p className="mt-1 text-[11px] text-gray-300">
+          <p className="mt-3 text-[11px] text-fg-muted">{error}</p>
+          <p className="mt-1 text-[11px] text-fg-muted">
             Select elements in Figma first
           </p>
         </div>
@@ -974,7 +968,7 @@ export default function App() {
           : !error && (
               <div className="flex flex-col items-center justify-center py-10">
                 <EmptyIcon />
-                <p className="mt-3 text-[11px] text-gray-400">
+                <p className="mt-3 text-[11px] text-fg-muted">
                   No colors to display
                 </p>
               </div>
