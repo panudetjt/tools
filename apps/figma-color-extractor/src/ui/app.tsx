@@ -73,6 +73,11 @@ const $exportLang = atom<LanguageFormat>("cssVariable");
 const $selectedIds = atom<Set<string>>(new Set());
 const $filterProperty = atom("all");
 const $hideDuplicates = atom(true);
+const $mergeAlpha = atom(true);
+
+function stripAlpha(hex: string): string {
+  return hex.replace(/#([0-9a-f]{6})[0-9a-f]{2}/i, "#$1");
+}
 const $activeFormats = atom<Record<FormatKey, boolean>>({
   hex: true,
   hsl: false,
@@ -93,13 +98,14 @@ const $filteredColors = computed([$colors, $filterProperty], (colors, prop) => {
 });
 
 const $displayColors = computed(
-  [$filteredColors, $hideDuplicates],
-  (list, hide) => {
+  [$filteredColors, $hideDuplicates, $mergeAlpha],
+  (list, hide, merge) => {
     if (!hide) return list;
     const seen = new Set<string>();
     return list.filter((c) => {
-      if (seen.has(c.swatch)) return false;
-      seen.add(c.swatch);
+      const key = merge ? stripAlpha(c.swatch) : c.swatch;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }
@@ -514,6 +520,7 @@ export default function App() {
   const copiedId = useStore($copiedId);
   const filterProperty = useStore($filterProperty);
   const hideDuplicates = useStore($hideDuplicates);
+  const mergeAlpha = useStore($mergeAlpha);
   const activeFormats = useStore($activeFormats);
   const displayColors = useStore($displayColors);
   const selectedIds = useStore($selectedIds);
@@ -566,6 +573,21 @@ export default function App() {
             >
               Unique
             </button>
+
+            {hideDuplicates && (
+              <button
+                type="button"
+                className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+                  mergeAlpha
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                }`}
+                onClick={() => $mergeAlpha.set(!mergeAlpha)}
+                title="Merge colors that differ only in opacity"
+              >
+                Merge Alpha
+              </button>
+            )}
 
             <div className="mx-0.5 h-4 w-px bg-gray-200" />
 
