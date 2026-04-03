@@ -18,9 +18,7 @@ export default defineConfig({
     target: "baseline-widely-available",
   },
   plugins: [
-    preactPreset({
-      compat: true,
-    }),
+    preactPreset(),
     tailwindcss(),
     viteSingleFile({ removeViteModuleLoader: true }),
   ],
