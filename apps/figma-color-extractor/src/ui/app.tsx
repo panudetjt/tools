@@ -627,40 +627,9 @@ const SelectionBar = memo(function SelectionBar() {
   );
 });
 
-// --- Export Modal ---
+// --- Export Modal Internals ---
 
-function ExportModal({ target }: { target: NonNullable<ExportTarget> }) {
-  const exportLang = useStore($exportLang);
-  const copiedId = useStore($copiedId);
-  const selectedColors = useStore($selectedColors);
-  const exportFormat = useStore($exportFormat);
-
-  const isSingle = target.type === "single";
-  const count = isSingle ? 1 : selectedColors.length;
-  const title = isSingle ? target.title : "";
-  const swatch = isSingle ? target.color.swatch : "";
-
-  const rows = CASE_STYLES.map((casing) => {
-    let value: string;
-    let copyId: string;
-    if (isSingle) {
-      const data = exportAll(target.color.formats[exportFormat], title);
-      value = data[exportLang][casing];
-      copyId = `modal-${exportLang}-${casing}`;
-    } else {
-      value = formatBulk(
-        selectedColors.map((c) => ({
-          color: c.formats[exportFormat],
-          label: c.variableName || c.nodeName || "Unlinked",
-        })),
-        exportLang,
-        casing
-      );
-      copyId = `modal-bulk-${exportLang}-${casing}`;
-    }
-    return { casing, copyId, value };
-  });
-
+function ModalOverlay({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 transition-opacity"
@@ -678,107 +647,175 @@ function ExportModal({ target }: { target: NonNullable<ExportTarget> }) {
         }}
         role="dialog"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-          <div className="flex items-center gap-2">
-            {isSingle ? (
-              <>
-                <div
-                  className="h-5 w-5 rounded border border-gray-100 shadow-sm"
-                  style={{ backgroundColor: swatch }}
-                />
-                <h3 className="text-[12px] font-semibold text-gray-900">
-                  {title}
-                </h3>
-              </>
-            ) : (
-              <h3 className="text-[12px] font-semibold text-gray-900">
-                {count} color{count === 1 ? "" : "s"}
-              </h3>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => $exportModal.set(null)}
-            className="rounded-md p-1 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-
-        {/* Bulk swatches */}
-        {!isSingle && (
-          <div className="flex gap-1.5 overflow-x-auto px-4 py-2">
-            {selectedColors.map((c) => {
-              const cid = `${c.nodeId}-${c.property}`;
-              return (
-                <div
-                  key={cid}
-                  className="h-5 w-5 shrink-0 rounded border border-gray-100 shadow-sm"
-                  style={{ backgroundColor: c.swatch }}
-                  title={c.variableName || c.nodeName || "Unlinked"}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Color format picker */}
-        <div className="flex items-center gap-1 border-b border-gray-50 px-4 py-1.5">
-          <span className="mr-1 text-[10px] text-gray-400">Format:</span>
-          {FORMAT_KEYS.map((fmt) => (
-            <button
-              key={fmt}
-              type="button"
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
-                exportFormat === fmt
-                  ? "bg-gray-900 text-white"
-                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              }`}
-              onClick={() => $exportFormat.set(fmt)}
-            >
-              {fmt.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {/* Language tabs */}
-        <div className="flex flex-wrap gap-1 border-b border-gray-50 px-4 py-2">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang}
-              type="button"
-              className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
-                exportLang === lang
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              }`}
-              onClick={() => $exportLang.set(lang)}
-            >
-              {LANGUAGE_LABELS[lang]}
-            </button>
-          ))}
-        </div>
-
-        {/* Export rows */}
-        <div className="max-h-70 overflow-y-auto px-2 py-1.5">
-          {rows.map((r) => (
-            <FormatRow
-              key={r.casing}
-              label={r.casing}
-              value={r.value}
-              copyId={r.copyId}
-              copiedId={copiedId}
-              onDownload={() => {
-                const ext = LANG_EXTENSIONS[exportLang];
-                const name = isSingle ? title : "colors";
-                downloadFile(r.value, `${name}.${ext}`);
-              }}
-            />
-          ))}
-        </div>
+        {children}
       </div>
     </div>
+  );
+}
+
+function ModalHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center gap-2">{children}</div>
+      <button
+        type="button"
+        onClick={() => $exportModal.set(null)}
+        className="rounded-md p-1 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
+      >
+        <CloseIcon />
+      </button>
+    </div>
+  );
+}
+
+function FormatPicker() {
+  const exportFormat = useStore($exportFormat);
+  const exportLang = useStore($exportLang);
+
+  return (
+    <>
+      <div className="flex items-center gap-1 border-b border-gray-50 px-4 py-1.5">
+        <span className="mr-1 text-[10px] text-gray-400">Format:</span>
+        {FORMAT_KEYS.map((fmt) => (
+          <button
+            key={fmt}
+            type="button"
+            className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
+              exportFormat === fmt
+                ? "bg-gray-900 text-white"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            }`}
+            onClick={() => $exportFormat.set(fmt)}
+          >
+            {fmt.toUpperCase()}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1 border-b border-gray-50 px-4 py-2">
+        {LANGUAGES.map((lang) => (
+          <button
+            key={lang}
+            type="button"
+            className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer ${
+              exportLang === lang
+                ? "bg-indigo-600 text-white"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            }`}
+            onClick={() => $exportLang.set(lang)}
+          >
+            {LANGUAGE_LABELS[lang]}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// --- Export Modal Variants ---
+
+function SingleExportModal({
+  color,
+  title,
+}: {
+  color: ExtractedColor;
+  title: string;
+}) {
+  const exportLang = useStore($exportLang);
+  const copiedId = useStore($copiedId);
+  const exportFormat = useStore($exportFormat);
+
+  const rows = CASE_STYLES.map((casing) => {
+    const data = exportAll(color.formats[exportFormat], title);
+    return {
+      casing,
+      copyId: `modal-${exportLang}-${casing}`,
+      value: data[exportLang][casing],
+    };
+  });
+
+  return (
+    <ModalOverlay>
+      <ModalHeader>
+        <div
+          className="h-5 w-5 rounded border border-gray-100 shadow-sm"
+          style={{ backgroundColor: color.swatch }}
+        />
+        <h3 className="text-[12px] font-semibold text-gray-900">{title}</h3>
+      </ModalHeader>
+      <FormatPicker />
+      <div className="max-h-70 overflow-y-auto px-2 py-1.5">
+        {rows.map((r) => (
+          <FormatRow
+            key={r.casing}
+            label={r.casing}
+            value={r.value}
+            copyId={r.copyId}
+            copiedId={copiedId}
+            onDownload={() => {
+              const ext = LANG_EXTENSIONS[exportLang];
+              downloadFile(r.value, `${title}.${ext}`);
+            }}
+          />
+        ))}
+      </div>
+    </ModalOverlay>
+  );
+}
+
+function BulkExportModal() {
+  const exportLang = useStore($exportLang);
+  const copiedId = useStore($copiedId);
+  const selectedColors = useStore($selectedColors);
+  const exportFormat = useStore($exportFormat);
+
+  const rows = CASE_STYLES.map((casing) => ({
+    casing,
+    copyId: `modal-bulk-${exportLang}-${casing}`,
+    value: formatBulk(
+      selectedColors.map((c) => ({
+        color: c.formats[exportFormat],
+        label: c.variableName || c.nodeName || "Unlinked",
+      })),
+      exportLang,
+      casing
+    ),
+  }));
+
+  return (
+    <ModalOverlay>
+      <ModalHeader>
+        <h3 className="text-[12px] font-semibold text-gray-900">
+          {selectedColors.length} color
+          {selectedColors.length === 1 ? "" : "s"}
+        </h3>
+      </ModalHeader>
+      <div className="flex gap-1.5 overflow-x-auto px-4 py-2">
+        {selectedColors.map((c) => (
+          <div
+            key={`${c.nodeId}-${c.property}`}
+            className="h-5 w-5 shrink-0 rounded border border-gray-100 shadow-sm"
+            style={{ backgroundColor: c.swatch }}
+            title={c.variableName || c.nodeName || "Unlinked"}
+          />
+        ))}
+      </div>
+      <FormatPicker />
+      <div className="max-h-70 overflow-y-auto px-2 py-1.5">
+        {rows.map((r) => (
+          <FormatRow
+            key={r.casing}
+            label={r.casing}
+            value={r.value}
+            copyId={r.copyId}
+            copiedId={copiedId}
+            onDownload={() => {
+              const ext = LANG_EXTENSIONS[exportLang];
+              downloadFile(r.value, `colors.${ext}`);
+            }}
+          />
+        ))}
+      </div>
+    </ModalOverlay>
   );
 }
 
@@ -842,7 +879,15 @@ export default function App() {
       <SelectionBar />
 
       {/* Export Modal */}
-      {exportModal && <ExportModal target={exportModal} />}
+      {exportModal &&
+        (exportModal.type === "single" ? (
+          <SingleExportModal
+            color={exportModal.color}
+            title={exportModal.title}
+          />
+        ) : (
+          <BulkExportModal />
+        ))}
     </div>
   );
 }
