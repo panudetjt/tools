@@ -8,7 +8,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "bun run build:ui && bun run build:main",
-    "build:main": "tsdown",
+    "build:main": "tsdown --minify",
     "build:ui": "vite build --config vite.config.svelte.ts",
     "build:ui-solid": "vite build --config vite.config.solid.ts",
     "build:ui-react": "vite build --config vite.config.react.ts",

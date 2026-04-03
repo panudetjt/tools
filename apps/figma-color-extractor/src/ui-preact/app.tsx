@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "preact/hooks";
+import { signal, computed, effect } from "@preact/signals";
 
 interface ColorFormats {
   hex: string;
@@ -35,75 +35,82 @@ function copyToClipboard(text: string) {
   ta.remove();
 }
 
-export default function App() {
-  const [colors, setColors] = useState<ExtractedColor[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [filterProperty, setFilterProperty] = useState("all");
-  const [hideDuplicates, setHideDuplicates] = useState(true);
-  const [activeFormats, setActiveFormats] = useState<
-    Record<FormatKey, boolean>
-  >({
-    hex: true,
-    hsl: false,
-    oklch: false,
-    rgb: true,
-  });
+const colors = signal<ExtractedColor[]>([]);
+const error = signal<string | null>(null);
+const copiedId = signal<string | null>(null);
+const filterProperty = signal("all");
+const hideDuplicates = signal(true);
+const activeFormats = signal<Record<FormatKey, boolean>>({
+  hex: true,
+  hsl: false,
+  oklch: false,
+  rgb: true,
+});
 
-  const filteredColors = colors.filter((c) => {
-    if (filterProperty !== "all" && c.property !== filterProperty) return false;
+const filteredColors = computed(() => {
+  const prop = filterProperty.value;
+  const list = colors.value;
+  if (prop === "all") return list;
+  return list.filter((c) => c.property === prop);
+});
+
+const displayColors = computed(() => {
+  const list = filteredColors.value;
+  if (!hideDuplicates.value) return list;
+  const seen = new Set<string>();
+  return list.filter((c) => {
+    if (seen.has(c.swatch)) return false;
+    seen.add(c.swatch);
     return true;
   });
+});
 
-  const uniqueColors = hideDuplicates
-    ? filteredColors.filter(
-        (c, i, arr) => arr.findIndex((x) => x.swatch === c.swatch) === i
-      )
-    : filteredColors;
+function copyValue(value: string, id: string) {
+  copyToClipboard(value);
+  copiedId.value = id;
+  setTimeout(() => {
+    copiedId.value = null;
+  }, 1500);
+}
 
-  const displayColors = uniqueColors;
+function toggleFormat(fmt: FormatKey) {
+  activeFormats.value = {
+    ...activeFormats.value,
+    [fmt]: !activeFormats.value[fmt],
+  };
+}
 
-  const copyValue = useCallback((value: string, id: string) => {
-    copyToClipboard(value);
-    setCopiedId(id);
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 1500);
-  }, []);
-
-  const toggleFormat = useCallback((fmt: FormatKey) => {
-    setActiveFormats((prev) => ({ ...prev, [fmt]: !prev[fmt] }));
-  }, []);
-
-  useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      const msg = event.data.pluginMessage;
-      if (msg.type === "colors") {
-        setColors(msg.colors ?? []);
-        setError(msg.error ?? null);
-      }
+effect(() => {
+  function handleMessage(event: MessageEvent) {
+    const msg = event.data.pluginMessage;
+    if (msg.type === "colors") {
+      colors.value = msg.colors ?? [];
+      error.value = msg.error ?? null;
     }
-    window.addEventListener("message", handleMessage);
-    postMessage("extract-colors");
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }
+  window.addEventListener("message", handleMessage);
+  postMessage("extract-colors");
+  return () => window.removeEventListener("message", handleMessage);
+});
 
+export default function App() {
   return (
     <div class="flex h-full flex-col bg-white">
       {/* Header */}
       <div class="border-b border-gray-200 px-4 py-3">
         <h2 class="text-sm font-semibold text-gray-900">Color Extractor</h2>
         <p class="mt-0.5 text-xs text-gray-500">
-          {colors.length} color{colors.length === 1 ? "" : "s"} found
+          {colors.value.length} color{colors.value.length === 1 ? "" : "s"}{" "}
+          found
         </p>
       </div>
 
       {/* Filter + Actions */}
-      {colors.length > 0 && (
+      {colors.value.length > 0 && (
         <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-2">
           <select
-            value={filterProperty}
-            onChange={(e) => setFilterProperty(e.currentTarget.value)}
+            value={filterProperty.value}
+            onChange={(e) => (filterProperty.value = e.currentTarget.value)}
             class="rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
           >
             <option value="all">All</option>
@@ -115,11 +122,11 @@ export default function App() {
           <button
             type="button"
             class={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors ${
-              hideDuplicates
+              hideDuplicates.value
                 ? "bg-orange-100 text-orange-700"
                 : "bg-gray-100 text-gray-400 hover:text-gray-600"
             }`}
-            onClick={() => setHideDuplicates((v) => !v)}
+            onClick={() => (hideDuplicates.value = !hideDuplicates.value)}
             title="Hide duplicate colors"
           >
             Unique
@@ -130,7 +137,7 @@ export default function App() {
               key={fmt}
               type="button"
               class={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors ${
-                activeFormats[fmt]
+                activeFormats.value[fmt]
                   ? "bg-blue-100 text-blue-700"
                   : "bg-gray-100 text-gray-400 hover:text-gray-600"
               }`}
@@ -143,7 +150,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
-              const data = displayColors.map((c) => ({
+              const data = displayColors.value.map((c) => ({
                 formats: { ...c.formats },
                 nodeId: c.nodeId,
                 nodeName: c.nodeName,
@@ -161,8 +168,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
-              const key = activeFormats.hex ? "hex" : "rgb";
-              const text = displayColors.map((c) => c.formats[key]).join("\n");
+              const key = activeFormats.value.hex ? "hex" : "rgb";
+              const text = displayColors.value
+                .map((c) => c.formats[key])
+                .join("\n");
               copyToClipboard(text);
             }}
             class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
@@ -181,9 +190,9 @@ export default function App() {
       )}
 
       {/* Error */}
-      {error && (
+      {error.value && (
         <div class="px-4 py-6 text-center">
-          <p class="text-xs text-gray-500">{error}</p>
+          <p class="text-xs text-gray-500">{error.value}</p>
           <p class="mt-1 text-xs text-gray-400">
             Select elements in Figma first
           </p>
@@ -192,8 +201,8 @@ export default function App() {
 
       {/* Color List */}
       <div class="flex-1 overflow-y-auto">
-        {displayColors.length > 0
-          ? displayColors.map((color) => {
+        {displayColors.value.length > 0
+          ? displayColors.value.map((color) => {
               const title = color.variableName || "Unlinked color";
               return (
                 <div
@@ -224,7 +233,7 @@ export default function App() {
                   {/* Format variants */}
                   <div class="mt-1 space-y-0.5 pl-11">
                     {FORMAT_KEYS.map((fmt) =>
-                      activeFormats[fmt] ? (
+                      activeFormats.value[fmt] ? (
                         <button
                           key={fmt}
                           type="button"
@@ -241,7 +250,7 @@ export default function App() {
                             {fmt.toUpperCase()}
                           </span>
                           <span class="truncate">{color.formats[fmt]}</span>
-                          {copiedId ===
+                          {copiedId.value ===
                             `${color.nodeId}${color.property}${fmt}` && (
                             <span class="shrink-0 text-green-600">Copied!</span>
                           )}
@@ -252,7 +261,7 @@ export default function App() {
                 </div>
               );
             })
-          : !error && (
+          : !error.value && (
               <div class="px-4 py-6 text-center">
                 <p class="text-xs text-gray-400">No colors to display</p>
               </div>
