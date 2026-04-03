@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
 
+import preactPreset from "@preact/preset-vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
-import solid from "vite-plugin-solid";
 
 export default defineConfig({
   build: {
@@ -13,14 +13,23 @@ export default defineConfig({
     emptyOutDir: false,
     outDir: "../../dist",
     rollupOptions: {
-      input: resolve(import.meta.dirname, "src/ui-solidjs/ui.html"),
+      input: resolve(import.meta.dirname, "src/ui/ui.html"),
     },
     target: "baseline-widely-available",
   },
   plugins: [
-    solid(),
+    preactPreset({
+      compat: true,
+    }),
     tailwindcss(),
     viteSingleFile({ removeViteModuleLoader: true }),
   ],
-  root: "src/ui-solidjs",
+  resolve: {
+    alias: {
+      react: "preact/compat",
+      "react-dom": "preact/compat",
+      "react-dom/client": "preact/compat/client",
+    },
+  },
+  root: "src/ui",
 });

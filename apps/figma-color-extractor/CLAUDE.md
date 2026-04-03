@@ -4,13 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
-- `bun run build` - Full build: Vite (Svelte UI) then tsdown (main)
-- `bun run build:ui` - Build Svelte UI only
-- `bun run build:ui-solid` - Build SolidJS UI only
+- `bun run build` - Full build: Vite (UI) then tsdown (main)
+- `bun run build:ui` - Build UI only
 - `bun run build:main` - Build plugin main thread only (tsdown)
-- `bun run build:solid` - Full build: SolidJS UI then tsdown (main)
-- `bun run dev` - Parallel watch mode (Svelte UI + tsdown)
-- `bun run dev:solid` - Parallel watch mode with SolidJS UI
+- `bun run dev` - Parallel watch mode (Vite UI + tsdown)
 - `bun fix` (run from `tools/` root) - Ultracite format + lint fix
 
 ## Architecture
@@ -29,8 +26,7 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 ### Source Layout
 
 - `src/main.ts` - Plugin sandbox entry. Has access to `figma` global and `__html__` (string contents of ui.html).
-- `src/ui/` - Svelte UI built by Vite. Entry: `ui.html` -> `main.ts` -> `App.svelte`.
-- `src/ui-solidjs/` - SolidJS UI (alternative). Entry: `ui.html` -> `main.tsx` -> `App.tsx`.
+- `src/ui/` - Preact/compat + Nanostores UI built by Vite. Entry: `ui.html` -> `main.tsx` -> `app.tsx`.
 - `src/ui/tsconfig.json` - Separate TS config for UI (DOM libs, bundler module resolution).
 - `docs/` - Decision records and technical notes.
 - `tsconfig.json` - TS config for plugin sandbox (es2020 target, `@figma/plugin-typings`).
@@ -45,13 +41,12 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 ### Key Config Files
 
 - `manifest.json` - Figma plugin manifest. Points `main` and `ui` to `dist/` outputs.
-- `vite.config.svelte.ts` - Vite config with Svelte, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
-- `vite.config.solid.ts` - Vite config with SolidJS, TailwindCSS, and singlefile plugins. `root: "src/ui-solidjs"`.
+- `vite.config.ts` - Vite config with Preact/compat, Nanostores, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
 - `tsdown.config.ts` - Bundles `src/main.ts` as ESM for browser platform.
 
 ## Tech Stack
 
-- **UI**: Svelte 5 (runes mode: `$state`, `$derived`, `$effect`, `mount()` API), TailwindCSS v4, Vite 8
+- **UI**: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
 - **Plugin sandbox**: TypeScript, tsdown (ESM bundler)
 - **Linting**: Oxlint with `@figma/eslint-plugin-figma-plugins` rules
 - **Package manager**: bun

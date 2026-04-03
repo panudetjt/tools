@@ -14,25 +14,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.svelte"],
-      "rules": {
-        "prefer-const": "off"
-      }
-    },
-    {
-      "files": ["src/ui-solidjs/**/*.tsx"],
-      "rules": {
-        "react/button-has-type": "off",
-        "react-perf/jsx-no-new-function-as-prop": "off"
-      }
-    },
-    {
-      "files": [
-        "src/ui-preact/**/*.tsx",
-        "src/ui-preact-compat/**/*.tsx",
-        "src/ui-preact-nanostores/**/*.tsx",
-        "src/ui-react/**/*.tsx"
-      ],
+      "files": ["src/ui/**/*.tsx"],
       "rules": {
         "react-perf/jsx-no-new-function-as-prop": "off"
       }
