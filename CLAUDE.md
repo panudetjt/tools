@@ -39,6 +39,31 @@
 - State what you found, where, and the fix. One pass.
 - If cause is unclear: say so. Do not guess.
 
+## Workflow
+
+### Lint/Format
+
+MUST run from the monorepo root (`tools/`):
+
+```sh
+cd /home/jame/work/my-project/tools
+bun run fix    # ultracite fix (lint + format)
+bun run check  # ultracite check (lint + format, no writes)
+```
+
+### Type Check
+
+Can run from either the monorepo root or the individual project directory:
+
+```sh
+# From root - checks all projects via Turbo
+bun run check-types
+
+# From a project directory - checks that project only
+cd apps/figma-color-extractor
+bun run check-type
+```
+
 ## Simple Formatting
 
 - No em dashes, smart quotes, or decorative Unicode symbols.
