@@ -6,14 +6,14 @@ import {
   formatRgb,
   modeHsl,
   modeOklch,
-  useMode,
+  useMode as createUseMode,
 } from "culori/fn";
 import type { Rgb } from "culori/fn";
 
 const toHsl = converter("hsl");
 const toOklch = converter("oklch");
-const hslMode = useMode(modeHsl);
-const oklchMode = useMode(modeOklch);
+const hslMode = createUseMode(modeHsl);
+const oklchMode = createUseMode(modeOklch);
 
 export interface ColorFormats {
   hex: string;

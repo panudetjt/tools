@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/preact";
 import { atom, computed } from "nanostores";
+import { memo } from "preact/compat";
 
 import { copyToClipboard, exportAll, formatBulk } from "./color-export";
 import type { CaseStyle, LanguageFormat } from "./color-export";
@@ -357,6 +358,275 @@ function FormatRow({
   );
 }
 
+// --- Hoisted static JSX ---
+
+const TOOLBAR_DIVIDER = <div className="mx-0.5 h-4 w-px bg-gray-200" />;
+
+// --- Extracted Components ---
+
+const ColorCard = memo(function ColorCard({
+  color,
+}: {
+  color: ExtractedColor;
+}) {
+  const copiedId = useStore($copiedId);
+  const activeFormats = useStore($activeFormats);
+  const selectedIds = useStore($selectedIds);
+
+  const title = color.variableName || color.nodeName || "Unlinked";
+  const cardId = `${color.nodeId}-${color.property}`;
+  const isSelected = selectedIds.has(cardId);
+
+  return (
+    <div
+      className={`mb-1.5 rounded-lg border bg-white transition-colors duration-150 ${
+        isSelected
+          ? "border-indigo-200 ring-1 ring-indigo-100"
+          : "border-gray-100 hover:border-gray-200"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 px-2.5 py-2">
+        <button
+          type="button"
+          onClick={() => toggleSelection(cardId)}
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors duration-150 cursor-pointer ${
+            isSelected
+              ? "bg-indigo-600"
+              : "border border-gray-300 hover:border-gray-400"
+          }`}
+        >
+          {isSelected && <CheckIcon />}
+        </button>
+
+        <div
+          className="h-7 w-7 shrink-0 rounded-md border border-gray-100 shadow-sm"
+          style={{ backgroundColor: color.swatch }}
+        />
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium text-gray-800">
+            {title}
+          </p>
+          <p className="truncate text-[10px] text-gray-400">
+            {color.property === "text-color" ? "text" : color.property}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1 text-gray-300 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-500 cursor-pointer"
+          onClick={() =>
+            $exportModal.set({
+              color,
+              title,
+              type: "single",
+            })
+          }
+          title="Export this color"
+        >
+          <CopyIcon size={13} />
+        </button>
+      </div>
+
+      <div className="border-t border-gray-50 px-2.5 py-1">
+        {FORMAT_KEYS.map((fmt) =>
+          activeFormats[fmt] ? (
+            <FormatRow
+              key={fmt}
+              label={fmt}
+              value={color.formats[fmt]}
+              copyId={`${color.nodeId}${color.property}${fmt}`}
+              copiedId={copiedId}
+            />
+          ) : null
+        )}
+      </div>
+    </div>
+  );
+});
+
+const Toolbar = memo(function Toolbar() {
+  const colors = useStore($colors);
+  const filterProperty = useStore($filterProperty);
+  const hideDuplicates = useStore($hideDuplicates);
+  const mergeAlpha = useStore($mergeAlpha);
+  const activeFormats = useStore($activeFormats);
+  const displayColors = useStore($displayColors);
+  const selectedIds = useStore($selectedIds);
+  const selectedColors = useStore($selectedColors);
+
+  const allSelected =
+    displayColors.length > 0 &&
+    displayColors.every((c) => selectedIds.has(`${c.nodeId}-${c.property}`));
+
+  if (colors.length === 0) return null;
+
+  function handleCanvas() {
+    const data: ExtractedColor[] = [];
+    for (const c of displayColors) {
+      if (!selectedIds.has(`${c.nodeId}-${c.property}`)) continue;
+      data.push({
+        formats: { ...c.formats },
+        nodeId: c.nodeId,
+        nodeName: c.nodeName,
+        property: c.property,
+        swatch: c.swatch,
+        variableName: c.variableName,
+      });
+    }
+    postMessage("add-to-canvas", { colors: data });
+  }
+
+  function handleCopyAll() {
+    const key = activeFormats.hex ? "hex" : "rgb";
+    const text = displayColors.map((c) => c.formats[key]).join("\n");
+    copyToClipboard(text);
+  }
+
+  return (
+    <div className="border-b border-gray-100 bg-white px-3 py-2">
+      {/* Row 1: Filters + formats */}
+      <div className="flex items-center gap-1.5">
+        <select
+          value={filterProperty}
+          onChange={(e) => $filterProperty.set(e.currentTarget.value)}
+          className="h-6 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-600 transition-colors duration-150 hover:border-gray-300 focus:border-indigo-400 focus:outline-none cursor-pointer"
+        >
+          <option value="all">All</option>
+          <option value="fill">Fills</option>
+          <option value="stroke">Strokes</option>
+          <option value="text-color">Text</option>
+        </select>
+
+        <button
+          type="button"
+          className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+            hideDuplicates
+              ? "bg-indigo-100 text-indigo-700"
+              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          }`}
+          onClick={() => $hideDuplicates.set(!hideDuplicates)}
+          title="Hide duplicate colors"
+        >
+          Unique
+        </button>
+
+        {hideDuplicates && (
+          <button
+            type="button"
+            className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+              mergeAlpha
+                ? "bg-indigo-100 text-indigo-700"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            }`}
+            onClick={() => $mergeAlpha.set(!mergeAlpha)}
+            title="Merge colors that differ only in opacity"
+          >
+            Merge Alpha
+          </button>
+        )}
+
+        {TOOLBAR_DIVIDER}
+
+        <button
+          type="button"
+          onClick={() => postMessage("extract-colors")}
+          className="h-6 rounded-md bg-gray-900 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-gray-700 cursor-pointer"
+          title="Refresh colors"
+        >
+          <RefreshIcon />
+        </button>
+      </div>
+
+      {/* Row 2: Format */}
+      <div className="mt-1.5 flex items-center gap-1.5">
+        {FORMAT_KEYS.map((fmt) => (
+          <button
+            key={fmt}
+            type="button"
+            className={`h-6 rounded-md px-1.5 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+              activeFormats[fmt]
+                ? "bg-gray-900 text-white"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            }`}
+            onClick={() => toggleFormat(fmt)}
+          >
+            {fmt.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Row 3: Selection + actions */}
+      <div className="mt-1.5 flex items-center gap-1.5">
+        <button
+          type="button"
+          className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+            allSelected
+              ? "bg-indigo-100 text-indigo-700"
+              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          }`}
+          onClick={toggleSelectAll}
+        >
+          {allSelected ? "Deselect" : "Select All"}
+        </button>
+
+        {selectedColors.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={handleCanvas}
+              className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
+            >
+              Canvas
+            </button>
+            <button
+              type="button"
+              onClick={() => $exportModal.set({ type: "bulk" })}
+              className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
+            >
+              Export
+            </button>
+          </>
+        )}
+
+        {selectedColors.length === 0 && (
+          <button
+            type="button"
+            onClick={handleCopyAll}
+            className="h-6 rounded-md bg-gray-100 px-2 text-[11px] font-medium text-gray-600 transition-colors duration-150 hover:bg-gray-200 cursor-pointer"
+          >
+            Copy All
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const SelectionBar = memo(function SelectionBar() {
+  const selectedColors = useStore($selectedColors);
+
+  if (selectedColors.length === 0) return null;
+
+  return (
+    <div className="border-t border-indigo-200 bg-indigo-50/60 px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] font-semibold text-indigo-700">
+          {selectedColors.length} selected
+        </span>
+        <div className="flex-1" />
+        <button
+          type="button"
+          className="text-[11px] text-indigo-400 transition-colors duration-150 hover:text-indigo-600 cursor-pointer"
+          onClick={clearSelection}
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  );
+});
+
 // --- Export Modal ---
 
 function ExportModal({ target }: { target: NonNullable<ExportTarget> }) {
@@ -517,18 +787,8 @@ function ExportModal({ target }: { target: NonNullable<ExportTarget> }) {
 export default function App() {
   const colors = useStore($colors);
   const error = useStore($error);
-  const copiedId = useStore($copiedId);
-  const filterProperty = useStore($filterProperty);
-  const hideDuplicates = useStore($hideDuplicates);
-  const mergeAlpha = useStore($mergeAlpha);
-  const activeFormats = useStore($activeFormats);
   const displayColors = useStore($displayColors);
-  const selectedIds = useStore($selectedIds);
-  const selectedColors = useStore($selectedColors);
   const exportModal = useStore($exportModal);
-  const allSelected =
-    displayColors.length > 0 &&
-    displayColors.every((c) => selectedIds.has(`${c.nodeId}-${c.property}`));
 
   return (
     <div className="flex h-full flex-col bg-[#FAFAFA] text-gray-800">
@@ -546,144 +806,7 @@ export default function App() {
       </div>
 
       {/* Toolbar */}
-      {colors.length > 0 && (
-        <div className="border-b border-gray-100 bg-white px-3 py-2">
-          {/* Row 1: Filters + formats */}
-          <div className="flex items-center gap-1.5">
-            <select
-              value={filterProperty}
-              onChange={(e) => $filterProperty.set(e.currentTarget.value)}
-              className="h-6 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-600 transition-colors duration-150 hover:border-gray-300 focus:border-indigo-400 focus:outline-none cursor-pointer"
-            >
-              <option value="all">All</option>
-              <option value="fill">Fills</option>
-              <option value="stroke">Strokes</option>
-              <option value="text-color">Text</option>
-            </select>
-
-            <button
-              type="button"
-              className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
-                hideDuplicates
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              }`}
-              onClick={() => $hideDuplicates.set(!hideDuplicates)}
-              title="Hide duplicate colors"
-            >
-              Unique
-            </button>
-
-            {hideDuplicates && (
-              <button
-                type="button"
-                className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
-                  mergeAlpha
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                }`}
-                onClick={() => $mergeAlpha.set(!mergeAlpha)}
-                title="Merge colors that differ only in opacity"
-              >
-                Merge Alpha
-              </button>
-            )}
-
-            <div className="mx-0.5 h-4 w-px bg-gray-200" />
-
-            <button
-              type="button"
-              onClick={() => postMessage("extract-colors")}
-              className="h-6 rounded-md bg-gray-900 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-gray-700 cursor-pointer"
-              title="Refresh colors"
-            >
-              <RefreshIcon />
-            </button>
-          </div>
-
-          {/* Row 2: Format */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            {FORMAT_KEYS.map((fmt) => (
-              <button
-                key={fmt}
-                type="button"
-                className={`h-6 rounded-md px-1.5 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
-                  activeFormats[fmt]
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                }`}
-                onClick={() => toggleFormat(fmt)}
-              >
-                {fmt.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 3: Selection + actions */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            <button
-              type="button"
-              className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
-                allSelected
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              }`}
-              onClick={toggleSelectAll}
-            >
-              {allSelected ? "Deselect" : "Select All"}
-            </button>
-
-            {selectedColors.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const data = displayColors
-                      .filter((c) =>
-                        selectedIds.has(`${c.nodeId}-${c.property}`)
-                      )
-                      .map((c) => ({
-                        formats: { ...c.formats },
-                        nodeId: c.nodeId,
-                        nodeName: c.nodeName,
-                        property: c.property,
-                        swatch: c.swatch,
-                        variableName: c.variableName,
-                      }));
-                    postMessage("add-to-canvas", { colors: data });
-                  }}
-                  className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
-                >
-                  Canvas
-                </button>
-                <button
-                  type="button"
-                  onClick={() => $exportModal.set({ type: "bulk" })}
-                  className="h-6 rounded-md bg-indigo-600 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-indigo-500 cursor-pointer"
-                >
-                  Export
-                </button>
-              </>
-            )}
-
-            {!selectedColors.length && (
-              <button
-                type="button"
-                onClick={() => {
-                  const key = activeFormats.hex ? "hex" : "rgb";
-                  const text = displayColors
-                    .map((c) => c.formats[key])
-                    .join("\n");
-                  copyToClipboard(text);
-                }}
-                className="h-6 rounded-md bg-gray-100 px-2 text-[11px] font-medium text-gray-600 transition-colors duration-150 hover:bg-gray-200 cursor-pointer"
-              >
-                Copy All
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <Toolbar />
 
       {/* Error */}
       {error && (
@@ -699,82 +822,12 @@ export default function App() {
       {/* Color List */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
         {displayColors.length > 0
-          ? displayColors.map((color) => {
-              const title = color.variableName || color.nodeName || "Unlinked";
-              const cardId = `${color.nodeId}-${color.property}`;
-
-              return (
-                <div
-                  key={cardId}
-                  className={`mb-1.5 rounded-lg border bg-white transition-colors duration-150 ${
-                    selectedIds.has(cardId)
-                      ? "border-indigo-200 ring-1 ring-indigo-100"
-                      : "border-gray-100 hover:border-gray-200"
-                  }`}
-                >
-                  {/* Header row */}
-                  <div className="flex items-center gap-2.5 px-2.5 py-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleSelection(cardId)}
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors duration-150 cursor-pointer ${
-                        selectedIds.has(cardId)
-                          ? "bg-indigo-600"
-                          : "border border-gray-300 hover:border-gray-400"
-                      }`}
-                    >
-                      {selectedIds.has(cardId) && <CheckIcon />}
-                    </button>
-
-                    <div
-                      className="h-7 w-7 shrink-0 rounded-md border border-gray-100 shadow-sm"
-                      style={{ backgroundColor: color.swatch }}
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-medium text-gray-800">
-                        {title}
-                      </p>
-                      <p className="truncate text-[10px] text-gray-400">
-                        {color.property === "text-color"
-                          ? "text"
-                          : color.property}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="shrink-0 rounded-md p-1 text-gray-300 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-500 cursor-pointer"
-                      onClick={() =>
-                        $exportModal.set({
-                          color,
-                          title,
-                          type: "single",
-                        })
-                      }
-                      title="Export this color"
-                    >
-                      <CopyIcon size={13} />
-                    </button>
-                  </div>
-
-                  {/* Format variants */}
-                  <div className="border-t border-gray-50 px-2.5 py-1">
-                    {FORMAT_KEYS.map((fmt) =>
-                      activeFormats[fmt] ? (
-                        <FormatRow
-                          key={fmt}
-                          label={fmt}
-                          value={color.formats[fmt]}
-                          copyId={`${color.nodeId}${color.property}${fmt}`}
-                          copiedId={copiedId}
-                        />
-                      ) : null
-                    )}
-                  </div>
-                </div>
-              );
-            })
+          ? displayColors.map((color) => (
+              <ColorCard
+                key={`${color.nodeId}-${color.property}`}
+                color={color}
+              />
+            ))
           : !error && (
               <div className="flex flex-col items-center justify-center py-10">
                 <EmptyIcon />
@@ -786,23 +839,7 @@ export default function App() {
       </div>
 
       {/* Selection bar */}
-      {selectedColors.length > 0 && (
-        <div className="border-t border-indigo-200 bg-indigo-50/60 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-indigo-700">
-              {selectedColors.length} selected
-            </span>
-            <div className="flex-1" />
-            <button
-              type="button"
-              className="text-[11px] text-indigo-400 transition-colors duration-150 hover:text-indigo-600 cursor-pointer"
-              onClick={clearSelection}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
+      <SelectionBar />
 
       {/* Export Modal */}
       {exportModal && <ExportModal target={exportModal} />}
