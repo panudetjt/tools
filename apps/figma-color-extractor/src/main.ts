@@ -1,5 +1,5 @@
 import type { ColorFormats } from "./color";
-import { paintToColor } from "./color";
+import { gradientToColors, gradientToCssString, paintToColor } from "./color";
 
 interface ExtractedColor {
   formats: ColorFormats;
@@ -8,6 +8,7 @@ interface ExtractedColor {
   property: string;
   swatch: string;
   variableName: string;
+  gradient?: string;
 }
 
 export async function resolveColorName(
@@ -46,6 +47,32 @@ export async function extractPaints(
         property,
         variableName,
       });
+      continue;
+    }
+    const gradientColors = gradientToColors(paint);
+    if (gradientColors.length > 0) {
+      const variableName = await resolveColorName(node, i, field);
+      for (const gc of gradientColors) {
+        results.push({
+          ...gc,
+          nodeId: node.id,
+          nodeName: node.name,
+          property,
+          variableName,
+        });
+      }
+      const cssGradient = gradientToCssString(paint);
+      if (cssGradient) {
+        results.push({
+          formats: { hex: "", hsl: "", oklch: "", rgb: "" },
+          gradient: cssGradient,
+          nodeId: node.id,
+          nodeName: node.name,
+          property,
+          swatch: cssGradient,
+          variableName,
+        });
+      }
     }
   }
   return results;
@@ -171,7 +198,7 @@ async function createColorFrame(colors: ExtractedColor[]) {
     const x = PAD + col * (SWATCH + GAP);
     const y = contentY + row * ROW_H;
     const c = colors[i];
-    if (!c) continue;
+    if (!c || c.gradient) continue;
 
     const swatch = figma.createRectangle();
     swatch.name = c.variableName || c.formats.hex;

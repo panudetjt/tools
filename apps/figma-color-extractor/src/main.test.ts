@@ -113,7 +113,7 @@ describe("paintToColor via extractPaints", () => {
     expect(results[0]!.nodeId).toBe("node-1");
   });
 
-  it("skips non-SOLID paints", async () => {
+  it("skips non-SOLID paints without stops", async () => {
     const { extractPaints } = await import("./main");
     const node = makeNode({
       fills: [{ type: "GRADIENT_LINEAR" } as Paint],
@@ -125,6 +125,38 @@ describe("paintToColor via extractPaints", () => {
       "fills"
     );
     expect(results).toHaveLength(0);
+  });
+
+  it("extracts gradient stop colors and gradient CSS entry", async () => {
+    const { extractPaints } = await import("./main");
+    const node = makeNode({
+      fills: [
+        {
+          gradientHandlePositions: [],
+          gradientStops: [
+            { color: { a: 1, b: 0, g: 0, r: 1 }, position: 0 },
+            { color: { a: 1, b: 1, g: 0, r: 0 }, position: 1 },
+          ],
+          gradientTransform: [
+            [1, 0, 0],
+            [0, 1, 0],
+          ],
+          opacity: 1,
+          type: "GRADIENT_LINEAR",
+        } as Paint,
+      ],
+    });
+    const results = await extractPaints(
+      node,
+      getFillsFromNode(node),
+      "fill",
+      "fills"
+    );
+    expect(results).toHaveLength(3);
+    expect(results[0]!.formats.hex).toBe("#ff0000");
+    expect(results[1]!.formats.hex).toBe("#0000ff");
+    expect(results[2]!.gradient).toContain("linear-gradient");
+    expect(results[2]!.formats.hex).toBe("");
   });
 
   it("extracts multiple paints from a single node", async () => {

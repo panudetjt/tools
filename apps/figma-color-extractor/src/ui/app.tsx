@@ -46,6 +46,12 @@ interface ExtractedColor {
   property: string;
   swatch: string;
   variableName: string;
+  gradient?: string;
+}
+
+function getCardId(c: ExtractedColor): string {
+  if (c.gradient) return `g-${c.nodeId}-${c.property}`;
+  return `${c.nodeId}-${c.property}`;
 }
 
 type FormatKey = keyof ColorFormats;
@@ -75,6 +81,7 @@ const $selectedIds = atom<Set<string>>(new Set());
 const $filterProperty = atom("all");
 const $hideDuplicates = atom(true);
 const $mergeAlpha = atom(true);
+const $gradientMode = atom(false);
 
 function stripAlpha(hex: string): string {
   return hex.replace(/#([0-9a-f]{6})[0-9a-f]{2}/i, "#$1");
@@ -104,6 +111,7 @@ const $displayColors = computed(
     if (!hide) return list;
     const seen = new Set<string>();
     return list.filter((c) => {
+      if (c.gradient) return true;
       const key = merge ? stripAlpha(c.swatch) : c.swatch;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -112,9 +120,21 @@ const $displayColors = computed(
   }
 );
 
-const $selectedColors = computed(
-  [$selectedIds, $displayColors],
-  (ids, colors) => colors.filter((c) => ids.has(`${c.nodeId}-${c.property}`))
+const $viewColors = computed(
+  [$displayColors, $gradientMode],
+  (colors, gradientMode) => {
+    if (!gradientMode) return colors.filter((c) => !c.gradient);
+    const gradientKeys = new Set(
+      colors.filter((c) => c.gradient).map((c) => `${c.nodeId}-${c.property}`)
+    );
+    return colors.filter(
+      (c) => c.gradient || !gradientKeys.has(`${c.nodeId}-${c.property}`)
+    );
+  }
+);
+
+const $selectedColors = computed([$selectedIds, $viewColors], (ids, colors) =>
+  colors.filter((c) => ids.has(getCardId(c)))
 );
 
 function copyValue(value: string, id: string) {
@@ -154,9 +174,9 @@ function clearSelection() {
 }
 
 function toggleSelectAll() {
-  const display = $displayColors.get();
+  const display = $viewColors.get();
   const current = $selectedIds.get();
-  const allIds = display.map((c) => `${c.nodeId}-${c.property}`);
+  const allIds = display.map((c) => getCardId(c));
   const allSelected =
     allIds.length > 0 && allIds.every((id) => current.has(id));
   $selectedIds.set(allSelected ? new Set() : new Set(allIds));
@@ -169,7 +189,7 @@ window.addEventListener("message", (event: MessageEvent) => {
     const list: ExtractedColor[] = msg.colors ?? [];
     $colors.set(list);
     $error.set(msg.error ?? null);
-    $selectedIds.set(new Set(list.map((c) => `${c.nodeId}-${c.property}`)));
+    $selectedIds.set(new Set(list.map((c) => getCardId(c))));
   }
 });
 postMessage("extract-colors");
@@ -362,6 +382,75 @@ function FormatRow({
 
 const TOOLBAR_DIVIDER = <div className="mx-0.5 h-4 w-px bg-gray-200" />;
 
+// --- Gradient Card ---
+
+const GradientCard = memo(function GradientCard({
+  color,
+}: {
+  color: ExtractedColor;
+}) {
+  const copiedId = useStore($copiedId);
+  const selectedIds = useStore($selectedIds);
+
+  const title = color.variableName || color.nodeName || "Unlinked";
+  const cardId = getCardId(color);
+  const isSelected = selectedIds.has(cardId);
+
+  return (
+    <div
+      className={`mb-1.5 rounded-lg border bg-white transition-colors duration-150 ${
+        isSelected
+          ? "border-indigo-200 ring-1 ring-indigo-100"
+          : "border-gray-100 hover:border-gray-200"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 px-2.5 py-2">
+        <button
+          type="button"
+          onClick={() => toggleSelection(cardId)}
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors duration-150 cursor-pointer ${
+            isSelected
+              ? "bg-indigo-600"
+              : "border border-gray-300 hover:border-gray-400"
+          }`}
+        >
+          {isSelected && <CheckIcon />}
+        </button>
+
+        <div
+          className="h-7 w-12 shrink-0 rounded-md border border-gray-100 shadow-sm"
+          style={{ background: color.gradient }}
+        />
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium text-gray-800">
+            {title}
+          </p>
+          <p className="truncate text-[10px] text-gray-400">gradient</p>
+        </div>
+
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1 text-gray-300 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-500 cursor-pointer"
+          onClick={() => copyValue(color.gradient ?? "", `${cardId}-export`)}
+          title="Copy gradient CSS"
+        >
+          <CopyIcon size={13} />
+        </button>
+      </div>
+
+      <div className="border-t border-gray-50 px-2.5 py-1">
+        <FormatRow
+          label="css"
+          value={color.gradient ?? ""}
+          copyId={`${cardId}-css`}
+          copiedId={copiedId}
+        />
+      </div>
+    </div>
+  );
+});
+
 // --- Extracted Components ---
 
 const ColorCard = memo(function ColorCard({
@@ -374,7 +463,7 @@ const ColorCard = memo(function ColorCard({
   const selectedIds = useStore($selectedIds);
 
   const title = color.variableName || color.nodeName || "Unlinked";
-  const cardId = `${color.nodeId}-${color.property}`;
+  const cardId = getCardId(color);
   const isSelected = selectedIds.has(cardId);
 
   return (
@@ -450,21 +539,23 @@ const Toolbar = memo(function Toolbar() {
   const filterProperty = useStore($filterProperty);
   const hideDuplicates = useStore($hideDuplicates);
   const mergeAlpha = useStore($mergeAlpha);
+  const gradientMode = useStore($gradientMode);
   const activeFormats = useStore($activeFormats);
-  const displayColors = useStore($displayColors);
+  const viewColors = useStore($viewColors);
   const selectedIds = useStore($selectedIds);
   const selectedColors = useStore($selectedColors);
 
   const allSelected =
-    displayColors.length > 0 &&
-    displayColors.every((c) => selectedIds.has(`${c.nodeId}-${c.property}`));
+    viewColors.length > 0 &&
+    viewColors.every((c) => selectedIds.has(getCardId(c)));
 
   if (colors.length === 0) return null;
 
   function handleCanvas() {
     const data: ExtractedColor[] = [];
-    for (const c of displayColors) {
-      if (!selectedIds.has(`${c.nodeId}-${c.property}`)) continue;
+    for (const c of viewColors) {
+      if (c.gradient) continue;
+      if (!selectedIds.has(getCardId(c))) continue;
       data.push({
         formats: { ...c.formats },
         nodeId: c.nodeId,
@@ -478,8 +569,9 @@ const Toolbar = memo(function Toolbar() {
   }
 
   function handleCopyAll() {
-    const key = activeFormats.hex ? "hex" : "rgb";
-    const text = displayColors.map((c) => c.formats[key]).join("\n");
+    const text = viewColors
+      .map((c) => c.gradient || c.formats[activeFormats.hex ? "hex" : "rgb"])
+      .join("\n");
     copyToClipboard(text);
   }
 
@@ -526,15 +618,17 @@ const Toolbar = memo(function Toolbar() {
           </button>
         )}
 
-        {TOOLBAR_DIVIDER}
-
         <button
           type="button"
-          onClick={() => postMessage("extract-colors")}
-          className="h-6 rounded-md bg-gray-900 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-gray-700 cursor-pointer"
-          title="Refresh colors"
+          className={`h-6 rounded-md px-2 text-[11px] font-medium transition-colors duration-150 cursor-pointer ${
+            gradientMode
+              ? "bg-indigo-100 text-indigo-700"
+              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          }`}
+          onClick={() => $gradientMode.set(!gradientMode)}
+          title="Show CSS gradients"
         >
-          <RefreshIcon />
+          Gradient
         </button>
       </div>
 
@@ -554,6 +648,17 @@ const Toolbar = memo(function Toolbar() {
             {fmt.toUpperCase()}
           </button>
         ))}
+
+        {TOOLBAR_DIVIDER}
+
+        <button
+          type="button"
+          onClick={() => postMessage("extract-colors")}
+          className="h-6 rounded-md bg-gray-900 px-2 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-gray-700 cursor-pointer"
+          title="Refresh colors"
+        >
+          <RefreshIcon />
+        </button>
       </div>
 
       {/* Row 3: Selection + actions */}
@@ -738,7 +843,7 @@ function SingleExportModal({
       <ModalHeader>
         <div
           className="h-5 w-5 rounded border border-gray-100 shadow-sm"
-          style={{ backgroundColor: color.swatch }}
+          style={{ background: color.swatch }}
         />
         <h3 className="text-[12px] font-semibold text-gray-900">{title}</h3>
       </ModalHeader>
@@ -773,7 +878,7 @@ function BulkExportModal() {
     copyId: `modal-bulk-${exportLang}-${casing}`,
     value: formatBulk(
       selectedColors.map((c) => ({
-        color: c.formats[exportFormat],
+        color: c.gradient || c.formats[exportFormat],
         label: c.variableName || c.nodeName || "Unlinked",
       })),
       exportLang,
@@ -792,9 +897,9 @@ function BulkExportModal() {
       <div className="flex gap-1.5 overflow-x-auto px-4 py-2">
         {selectedColors.map((c) => (
           <div
-            key={`${c.nodeId}-${c.property}`}
+            key={getCardId(c)}
             className="h-5 w-5 shrink-0 rounded border border-gray-100 shadow-sm"
-            style={{ backgroundColor: c.swatch }}
+            style={{ background: c.swatch }}
             title={c.variableName || c.nodeName || "Unlinked"}
           />
         ))}
@@ -824,7 +929,7 @@ function BulkExportModal() {
 export default function App() {
   const colors = useStore($colors);
   const error = useStore($error);
-  const displayColors = useStore($displayColors);
+  const viewColors = useStore($viewColors);
   const exportModal = useStore($exportModal);
 
   return (
@@ -858,13 +963,14 @@ export default function App() {
 
       {/* Color List */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        {displayColors.length > 0
-          ? displayColors.map((color) => (
-              <ColorCard
-                key={`${color.nodeId}-${color.property}`}
-                color={color}
-              />
-            ))
+        {viewColors.length > 0
+          ? viewColors.map((color) =>
+              color.gradient ? (
+                <GradientCard key={getCardId(color)} color={color} />
+              ) : (
+                <ColorCard key={getCardId(color)} color={color} />
+              )
+            )
           : !error && (
               <div className="flex flex-col items-center justify-center py-10">
                 <EmptyIcon />
