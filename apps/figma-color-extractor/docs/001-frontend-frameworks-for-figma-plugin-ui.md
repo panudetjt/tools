@@ -6,16 +6,16 @@ The Figma plugin UI ships as a single inlined HTML file (`vite-plugin-singlefile
 
 ## Tested (Actual Build)
 
-|                     | Svelte 5                                | SolidJS 1.9                                            | React 19         | Qwik 1.19             |
-| ------------------- | --------------------------------------- | ------------------------------------------------------ | ---------------- | --------------------- |
-| ui.html (raw)       | 51.33 kB                                | 28.37 kB                                               | 206.72 kB        | N/A (multi-file)      |
-| Total bundle (raw)  | 51.33 kB                                | 28.37 kB                                               | 206.72 kB        | 87.07 kB (7 files)    |
-| ui.html (gzip)      | 19.29 kB                                | 10.13 kB                                               | 65.10 kB         | N/A (multi-file)      |
-| Modules transformed | 109                                     | 8                                                      | 18               | 11 (manualChunks)     |
-| vDOM                | Compiler (compiles away at build)       | No (fine-grained reactive)                             | Yes              | No (resumable)        |
-| Reactivity          | Runes (`$state`, `$derived`, `$effect`) | Signals (`createSignal`, `createEffect`, `createMemo`) | Hooks + Compiler | Optimizer (lazy QRLs) |
-| Build time          | 173ms                                   | 193ms                                                  | 425ms            | 112ms                 |
-| Single file         | Yes                                     | Yes                                                    | Yes              | **No**                |
+|                     | Svelte 5                                | SolidJS 1.9                                            | Preact 10.29    | Preact + compat | React 19 + Compiler | Qwik 1.19             |
+| ------------------- | --------------------------------------- | ------------------------------------------------------ | --------------- | --------------- | ------------------- | --------------------- |
+| ui.html (raw)       | 51.33 kB                                | 28.37 kB                                               | 27.46 kB        | 33.36 kB        | 206.72 kB           | N/A (multi-file)      |
+| Total bundle (raw)  | 51.33 kB                                | 28.37 kB                                               | 27.46 kB        | 33.36 kB        | 206.72 kB           | 87.07 kB (7 files)    |
+| ui.html (gzip)      | 19.29 kB                                | 10.13 kB                                               | 9.91 kB         | 12.05 kB        | 65.10 kB            | N/A (multi-file)      |
+| Modules transformed | 109                                     | 8                                                      | 9               | 10              | 18                  | 11 (manualChunks)     |
+| vDOM                | Compiler (compiles away at build)       | No (fine-grained reactive)                             | Yes             | Yes             | Yes                 | No (resumable)        |
+| Reactivity          | Runes (`$state`, `$derived`, `$effect`) | Signals (`createSignal`, `createEffect`, `createMemo`) | Hooks + Signals | Hooks + Signals | Hooks + Compiler    | Optimizer (lazy QRLs) |
+| Build time          | 173ms                                   | 193ms                                                  | 91ms            | 184ms           | 425ms               | 112ms                 |
+| Single file         | Yes                                     | Yes                                                    | Yes             | Yes             | Yes                 | **No**                |
 
 ## Researched (Framework Runtime Only)
 
@@ -23,8 +23,8 @@ The Figma plugin UI ships as a single inlined HTML file (`vite-plugin-singlefile
 | ----------------------- | ---- | ---- | --------- | ------------------------ | -------------------- | ----------------------- |
 | **SolidJS 1.9**         | 16   | 6    | No        | Fine-grained signals     | JSX components       | Yes (tested)            |
 | **Svelte 5**            | 45   | 17   | No\*      | Compiler (compiles away) | `.svelte` files      | Yes (tested)            |
-| **Preact 10.29**        | 11.5 | 4.8  | Yes       | Hooks + Signals addon    | JSX components       | Yes                     |
-| **Preact + Signals**    | 21   | 8.2  | Yes       | Signals (fine-grained)   | JSX components       | Yes                     |
+| **Preact 10.29**        | 11.5 | 4.8  | Yes       | Hooks + Signals addon    | JSX components       | Yes (tested)            |
+| **Preact + Signals**    | 21   | 8.2  | Yes       | Signals (fine-grained)   | JSX components       | Yes (tested)            |
 | **Alpine.js 3.15**      | 16   | 5.5  | No        | Proxy-based              | HTML attributes      | Yes                     |
 | **Petite-vue 0.7**      | 6    | 2.5  | No        | Proxy-based              | HTML attributes      | Yes (no build needed)   |
 | **Lit 3.4**             | 16   | 5    | No        | Reactive properties      | Web Components       | Yes                     |
@@ -80,11 +80,11 @@ No meaningful updates since 2023. Incompatible with React 19+. Not a viable choi
 - **Cons**: Largest bundle by far (65KB gzip vs 10KB for SolidJS), still has virtual DOM (compiler reduces re-renders but doesn't eliminate diffing), requires `@rolldown/plugin-babel` + `babel-plugin-react-compiler` + `react-compiler-runtime` adding build complexity, slowest build time (425ms), ecosystem is overkill for a small plugin
 - **Best for**: Teams already in the React ecosystem - but the bundle size penalty makes it hard to justify for a Figma plugin
 
-### Preact + Signals (~8.2KB gzip)
+### Preact + Signals (9.91KB gzip native, 12.05KB gzip with compat)
 
-- **Pros**: React-compatible API (largest ecosystem), Signals addon provides fine-grained reactivity without full re-renders, small runtime, good TypeScript support, `preact/compat` for React library compat
-- **Cons**: Still has virtual DOM (Signals help but don't eliminate it), React ecosystem is overkill for a small plugin, some React APIs not supported (RSC, useSyncExternalStore)
-- **Best for**: Teams familiar with React who want smaller bundles
+- **Pros**: Smallest tested bundle (9.91KB gzip), fastest build (91ms), React-compatible API with full ecosystem access via `preact/compat` (12.05KB gzip), Signals addon for fine-grained reactivity, good TypeScript support
+- **Cons**: Still has virtual DOM (Signals help but don't eliminate it), some React APIs not supported via compat (RSC, useSyncExternalStore), `preact/compat` adds ~2KB gzip for the compatibility shim
+- **Best for**: Teams familiar with React who want the smallest possible bundle with full ecosystem access
 
 ### Vue 3 runtime-only (~9KB gzip)
 
@@ -94,17 +94,29 @@ No meaningful updates since 2023. Incompatible with React 19+. Not a viable choi
 
 ## Recommendation
 
-**For this Figma plugin, SolidJS remains the best choice** because:
+**For this Figma plugin, the top two choices are Preact and SolidJS:**
 
-1. Already tested and working (28KB single file)
-2. True fine-grained reactivity (no vDOM, no re-renders)
+### Preact 10.29 + Signals (9.91KB gzip - smallest tested)
+
+1. Smallest bundle of all tested frameworks (9.91KB gzip)
+2. Fastest build time (91ms)
+3. React-compatible API - largest ecosystem, most community resources
+4. Signals addon for fine-grained reactivity
+5. Trade-off: still has vDOM (Signals help but don't eliminate it)
+
+### SolidJS 1.9 (10.13KB gzip - close second)
+
+1. True fine-grained reactivity (no vDOM, no re-renders)
+2. Only 8 modules transformed (minimal overhead)
 3. JSX component model with good DX
-4. 8 modules transformed (minimal overhead)
+4. Trade-off: smaller ecosystem than Preact/React
 
-**If exploring alternatives, the most promising are:**
+**Both are excellent choices.** Preact wins on size and ecosystem; SolidJS wins on reactivity model. The difference is only 0.22KB gzip.
 
-- **Preact + Signals** - React-like DX with signals, could be ~8KB total runtime. Trade-off: still has vDOM overhead.
-- **Alpine.js** - Smallest at ~5.5KB, no build step, no vDOM. Trade-off: HTML-attribute DX is limiting for complex UIs.
+**If exploring other alternatives:**
+
+- **Alpine.js** - No build step, no vDOM. Trade-off: HTML-attribute DX is limiting for complex UIs.
+- **React 19 + Compiler** - Largest ecosystem but 65KB gzip - hard to justify for a Figma plugin.
 
 ## Sources
 

@@ -27,6 +27,16 @@
       }
     },
     {
+      "files": [
+        "src/ui-preact/**/*.tsx",
+        "src/ui-preact-compat/**/*.tsx",
+        "src/ui-react/**/*.tsx"
+      ],
+      "rules": {
+        "react-perf/jsx-no-new-function-as-prop": "off"
+      }
+    },
+    {
       "files": ["**/*.test.ts"],
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off"
