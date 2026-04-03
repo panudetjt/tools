@@ -1,0 +1,19 @@
+{
+  "name": "@panudetjt/invariant",
+  "version": "0.0.1",
+  "description": "Type-safe invariant assertion utilities",
+  "keywords": [],
+  "license": "MIT",
+  "author": "Panudet <me@panudet.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panudetjt/tools.git"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@panudetjt/typescript-config": "*",
+    "typescript": "5.9.2"
+  }
+}
