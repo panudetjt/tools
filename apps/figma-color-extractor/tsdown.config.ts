@@ -6,9 +6,11 @@ export default defineConfig({
     alwaysBundle: [/.*/],
   },
   entry: ["src/main.ts"],
-  format: ["esm"],
-  name: "code",
+  format: ["iife"],
   outDir: "dist",
+  outputOptions: {
+    name: "color_extractor",
+  },
   platform: "browser",
   target: "es2015",
 });

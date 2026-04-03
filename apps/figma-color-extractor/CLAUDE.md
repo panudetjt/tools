@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **Figma plugin** with a dual-build system producing two outputs into `dist/`:
 
-- `dist/main.js` - Plugin sandbox (tsdown). Runs in Figma's restricted JS environment with access to the `figma` global API. No DOM/browser APIs.
+- `dist/main.iife.js` - Plugin sandbox (tsdown, IIFE format). Runs in Figma's restricted JS environment with access to the `figma` global API. No DOM/browser APIs.
 - `dist/ui.html` - Plugin UI (Vite + vite-plugin-singlefile). Self-contained HTML with all JS/CSS inlined. Runs in a browser iframe with full DOM access. Communicates with main via `parent.postMessage`.
 
 ### Communication
@@ -34,8 +34,9 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 ### Build Constraints
 
 - `vite-plugin-singlefile` inlines all assets into a single HTML file (Figma sandbox requirement).
-- `emptyOutDir: false` prevents Vite from deleting `dist/main.js` during UI build.
+- `emptyOutDir: false` prevents Vite from deleting `dist/main.iife.js` during UI build.
 - `clean: false` in tsdown prevents deleting `dist/ui.html` during main build.
+- tsdown outputs IIFE format (not ESM) because Figma sandbox does not support `export` syntax.
 - TailwindCSS v4 uses `@import "tailwindcss"` with `@tailwindcss/vite` plugin (no config file).
 
 ### Key Config Files
