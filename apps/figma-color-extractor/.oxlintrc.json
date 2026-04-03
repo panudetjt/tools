@@ -20,6 +20,13 @@
       }
     },
     {
+      "files": ["src/ui-solidjs/**/*.tsx"],
+      "rules": {
+        "react/button-has-type": "off",
+        "react-perf/jsx-no-new-function-as-prop": "off"
+      }
+    },
+    {
       "files": ["**/*.test.ts"],
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off"

@@ -6,8 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `bun run build` - Full build: Vite (UI) then tsdown (main)
 - `bun run build:ui` - Build UI only (Vite + Svelte + TailwindCSS)
+- `bun run build:ui-solid` - Build SolidJS UI only (Vite + SolidJS + TailwindCSS)
 - `bun run build:main` - Build plugin main thread only (tsdown)
+- `bun run build:solid` - Full build: SolidJS UI then tsdown (main)
 - `bun run dev` - Parallel watch mode (Vite + tsdown)
+- `bun run dev:solid` - Parallel watch mode with SolidJS UI
 - `bun fix` (run from `tools/` root) - Ultracite format + lint fix
 
 ## Architecture
@@ -26,8 +29,10 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 ### Source Layout
 
 - `src/main.ts` - Plugin sandbox entry. Has access to `figma` global and `__html__` (string contents of ui.html).
-- `src/ui/` - UI built by Vite. Entry: `ui.html` -> `main.ts` -> `App.svelte`.
+- `src/ui/` - Svelte UI built by Vite. Entry: `ui.html` -> `main.ts` -> `App.svelte`.
+- `src/ui-solidjs/` - SolidJS UI (alternative). Entry: `ui.html` -> `main.tsx` -> `App.tsx`.
 - `src/ui/tsconfig.json` - Separate TS config for UI (DOM libs, bundler module resolution).
+- `docs/` - Decision records and technical notes.
 - `tsconfig.json` - TS config for plugin sandbox (es2020 target, `@figma/plugin-typings`).
 
 ### Build Constraints
@@ -41,6 +46,7 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 
 - `manifest.json` - Figma plugin manifest. Points `main` and `ui` to `dist/` outputs.
 - `vite.config.ts` - Vite config with Svelte, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
+- `vite.config.solid.ts` - Vite config with SolidJS, TailwindCSS, and singlefile plugins. `root: "src/ui-solidjs"`.
 - `tsdown.config.ts` - Bundles `src/main.ts` as ESM for browser platform.
 
 ## Tech Stack
