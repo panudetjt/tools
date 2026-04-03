@@ -1,5 +1,7 @@
 # Color Extractor
 
+<img src="./docs/assets/color-extractor-icon.svg" width="48px" />
+
 Figma plugin that extracts colors from selected elements and exports them in multiple formats.
 
 ## Features
