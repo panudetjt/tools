@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
-- `bun run build` - Full build: Vite (UI) then tsdown (main)
-- `bun run build:ui` - Build UI only (Vite + Svelte + TailwindCSS)
-- `bun run build:ui-solid` - Build SolidJS UI only (Vite + SolidJS + TailwindCSS)
+- `bun run build` - Full build: Vite (Svelte UI) then tsdown (main)
+- `bun run build:ui` - Build Svelte UI only
+- `bun run build:ui-solid` - Build SolidJS UI only
 - `bun run build:main` - Build plugin main thread only (tsdown)
 - `bun run build:solid` - Full build: SolidJS UI then tsdown (main)
-- `bun run dev` - Parallel watch mode (Vite + tsdown)
+- `bun run dev` - Parallel watch mode (Svelte UI + tsdown)
 - `bun run dev:solid` - Parallel watch mode with SolidJS UI
 - `bun fix` (run from `tools/` root) - Ultracite format + lint fix
 
@@ -45,7 +45,7 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 ### Key Config Files
 
 - `manifest.json` - Figma plugin manifest. Points `main` and `ui` to `dist/` outputs.
-- `vite.config.ts` - Vite config with Svelte, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
+- `vite.config.svelte.ts` - Vite config with Svelte, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
 - `vite.config.solid.ts` - Vite config with SolidJS, TailwindCSS, and singlefile plugins. `root: "src/ui-solidjs"`.
 - `tsdown.config.ts` - Bundles `src/main.ts` as ESM for browser platform.
 

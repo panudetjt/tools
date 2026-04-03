@@ -9,10 +9,10 @@
   "scripts": {
     "build": "bun run build:ui && bun run build:main",
     "build:main": "tsdown",
-    "build:ui": "vite build",
+    "build:ui": "vite build --config vite.config.svelte.ts",
     "build:ui-solid": "vite build --config vite.config.solid.ts",
     "build:solid": "bun run build:ui-solid && bun run build:main",
-    "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch src/main.ts\"",
+    "dev": "concurrently -n vite,tsdown \"vite build --watch --config vite.config.svelte.ts\" \"tsdown --watch src/main.ts\"",
     "dev:solid": "concurrently -n vite,tsdown \"vite build --watch --config vite.config.solid.ts\" \"tsdown --watch src/main.ts\"",
     "fix": "ultracite fix",
     "watch": "bun run dev"
