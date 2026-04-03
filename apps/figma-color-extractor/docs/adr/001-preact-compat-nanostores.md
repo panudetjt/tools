@@ -9,6 +9,7 @@
 Figma plugins run UI in an iframe loaded from a single HTML file. Bundle size directly impacts plugin load time. We evaluated six frontend frameworks/configurations for the color extractor plugin UI.
 
 Candidates benchmarked:
+
 - Svelte 5
 - SolidJS
 - React 19

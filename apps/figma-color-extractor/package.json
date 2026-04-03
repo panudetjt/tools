@@ -1,6 +1,7 @@
 {
   "name": "color-extractor",
   "version": "1.0.0",
+  "private": true,
   "description": "Your Figma Plugin",
   "license": "MIT",
   "author": "Panudet <me@panudet.dev>",
@@ -11,7 +12,8 @@
     "build:main": "tsdown --minify",
     "build:ui": "vite build",
     "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch src/main.ts\"",
-    "watch": "bun run dev"
+    "watch": "bun run dev",
+    "check-type": "tsc --noEmit"
   },
   "dependencies": {
     "@nanostores/preact": "^1.1.0",
