@@ -30,6 +30,7 @@
       "files": [
         "src/ui-preact/**/*.tsx",
         "src/ui-preact-compat/**/*.tsx",
+        "src/ui-preact-nanostores/**/*.tsx",
         "src/ui-react/**/*.tsx"
       ],
       "rules": {

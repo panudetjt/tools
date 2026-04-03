@@ -24,7 +24,9 @@
     "watch": "bun run dev"
   },
   "dependencies": {
+    "@nanostores/preact": "^1.1.0",
     "culori": "^4.0.2",
+    "nanostores": "^1.2.0",
     "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
