@@ -98,6 +98,7 @@ type ExportTarget =
   | { color: ExtractedColor; title: string; type: "single" };
 
 const $exportModal = atom<ExportTarget | null>(null);
+const $modalClosing = atom(false);
 const $exportFormat = atom<FormatKey>("hex");
 
 const $filteredColors = computed([$colors, $filterProperty], (colors, prop) => {
@@ -730,21 +731,41 @@ const SelectionBar = memo(function SelectionBar() {
 
 // --- Export Modal Internals ---
 
+const MODAL_DURATION = 200;
+
+function closeModal() {
+  $modalClosing.set(true);
+  setTimeout(() => {
+    $exportModal.set(null);
+    $modalClosing.set(false);
+  }, MODAL_DURATION);
+}
+
 function ModalOverlay({ children }: { children: React.ReactNode }) {
+  const closing = useStore($modalClosing);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-surface-overlay transition-opacity"
-      onClick={() => $exportModal.set(null)}
+      className={`fixed inset-0 z-50 flex items-end justify-center ${
+        closing
+          ? "animate-out fade-out duration-200"
+          : "animate-in fade-in duration-200"
+      } bg-surface-overlay`}
+      onClick={closeModal}
       onKeyDown={(e) => {
-        if (e.key === "Escape") $exportModal.set(null);
+        if (e.key === "Escape") closeModal();
       }}
       role="presentation"
     >
       <div
-        className="w-full max-w-76 rounded-t-2xl bg-surface shadow-xl"
+        className={`w-full max-w-76 rounded-t-2xl bg-surface shadow-xl ${
+          closing
+            ? "animate-out slide-out-to-bottom fade-out duration-200"
+            : "animate-in slide-in-from-bottom fade-in duration-200"
+        }`}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if (e.key === "Escape") $exportModal.set(null);
+          if (e.key === "Escape") closeModal();
         }}
         role="dialog"
       >
@@ -760,7 +781,7 @@ function ModalHeader({ children }: { children: React.ReactNode }) {
       <div className="flex items-center gap-2">{children}</div>
       <button
         type="button"
-        onClick={() => $exportModal.set(null)}
+        onClick={closeModal}
         className="rounded-md p-1 text-fg-muted transition-colors duration-150 hover:bg-surface-dim hover:text-fg cursor-pointer"
       >
         <CloseIcon />
