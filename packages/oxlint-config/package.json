@@ -17,7 +17,7 @@
   },
   "type": "module",
   "exports": {
-    "./oxlintrc.json": "./oxlintrc.json"
+    "./.oxlintrc.json": "./.oxlintrc.json"
   },
   "publishConfig": {
     "access": "public",

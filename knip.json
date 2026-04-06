@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": ["-lintignore"],
+  "workspaces": {
+    ".": {
+      "ignoreDependencies": ["oxfmt"]
+    },
+    "apps/figma-color-extractor": {
+      "entry": ["src/ui/main.tsx", "src/**/*.test.ts"],
+      "project": ["**/*.{ts,tsx,css}", "!src/ui/vite-env.d.ts"]
+    },
+    "packages/invariant": {
+      "entry": ["src/invariant.ts", "src/invariant.test.ts"]
+    },
+    "packages/oxlint-config": {
+      "entry": [".oxlintrc.json"]
+    },
+    "packages/typescript-config": {
+      "ignoreUnresolved": ["next"]
+    }
+  }
+}
