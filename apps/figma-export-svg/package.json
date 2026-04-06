@@ -1,6 +1,6 @@
 {
   "name": "export-svg",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Figma plugin to export selected nodes as SVG or JSX components with currentColor replacement",
   "license": "MIT",

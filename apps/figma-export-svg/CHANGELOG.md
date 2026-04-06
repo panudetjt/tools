@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 - 2026-04-06
+
+### Features
+
+- **Multi-item SVG preview** - Preview now displays all selected nodes instead of only the first. Each item shows its name as a label when multiple nodes are selected.
+
+### Changes
+
+- Replaced single `$svgPreview` atom with direct rendering from `$exportItems`
+- React key props use stable `fileName` instead of array index
+
 ## 1.0.0 - 2026-04-06
 
 ### Features

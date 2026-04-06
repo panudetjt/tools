@@ -11,10 +11,11 @@ Figma plugin that exports selected nodes as SVG files or JSX components, with op
 - Three export formats: raw SVG, JSX with default export, JSX with named export
 - PascalCase component names derived from Figma node names
 - Multi-component files: selecting multiple nodes produces a single JSX file with all components as named exports
+- Multi-item preview - all selected nodes are previewed with name labels
 - Auto-preview on selection change - SVG preview updates instantly when selection changes in Figma
 - Auto re-export when toggling currentColor setting
 - Copy to clipboard or download as file
-- Multi-file zip download via JSZip when downloading multiple selections
+- Multi-file zip download using built-in minimal ZIP creator (~2KB) when downloading multiple selections
 - Checkerboard background on SVG preview for transparency visualization
 - Automatic light/dark theme support matching Figma's UI theme
 
@@ -22,7 +23,7 @@ Figma plugin that exports selected nodes as SVG files or JSX components, with op
 
 - UI: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
 - Plugin sandbox: TypeScript, tsdown (IIFE, ES2015 target)
-- Zip bundling: JSZip
+- Zip bundling: built-in minimal ZIP creator (~2KB)
 - Animations: tw-animate-css
 - Package manager: bun
 
