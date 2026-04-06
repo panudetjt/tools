@@ -2,7 +2,7 @@
   "name": "export-svg",
   "version": "1.0.0",
   "private": true,
-  "description": "Export SVG",
+  "description": "Figma plugin to export selected nodes as SVG or JSX components with currentColor replacement",
   "license": "MIT",
   "author": "Panudet <me@panudet.dev>",
   "type": "module",
@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@nanostores/preact": "^1.1.0",
-    "jszip": "^3.10.1",
     "nanostores": "^1.2.0",
     "preact": "^10.25.0"
   },
