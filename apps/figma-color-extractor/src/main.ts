@@ -3,12 +3,13 @@ import { gradientToColors, gradientToCssString, paintToColor } from "./color";
 
 interface ExtractedColor {
   formats: ColorFormats;
+  gradient?: string;
   nodeId: string;
   nodeName: string;
+  paint?: Paint;
   property: string;
   swatch: string;
   variableName: string;
-  gradient?: string;
 }
 
 export async function resolveColorName(
@@ -68,6 +69,7 @@ export async function extractPaints(
           gradient: cssGradient,
           nodeId: node.id,
           nodeName: node.name,
+          paint,
           property,
           swatch: cssGradient,
           variableName,
@@ -169,7 +171,7 @@ async function createColorFrame(colors: ExtractedColor[]) {
   const SWATCH = 64;
   const GAP = 16;
   const PAD = 24;
-  const ROW_H = SWATCH + 42;
+  const ROW_H = SWATCH + 28;
   const FRAME_W = 420;
   const COLS = 4;
   const rows = Math.ceil(colors.length / COLS);
@@ -198,7 +200,47 @@ async function createColorFrame(colors: ExtractedColor[]) {
     const x = PAD + col * (SWATCH + GAP);
     const y = contentY + row * ROW_H;
     const c = colors[i];
-    if (!c || c.gradient) continue;
+    if (!c) continue;
+
+    if (c.gradient && c.paint) {
+      const swatch = figma.createRectangle();
+      swatch.name = c.variableName || c.nodeName;
+      swatch.resize(SWATCH, SWATCH);
+      swatch.x = x;
+      swatch.y = y;
+      swatch.cornerRadius = 8;
+      swatch.fills = [c.paint];
+      frame.appendChild(swatch);
+
+      const label = c.variableName || c.nodeName || "Unlinked";
+      const titleText = figma.createText();
+      titleText.name = "Title";
+      titleText.textAutoResize = "TRUNCATE";
+      titleText.resize(SWATCH, 14);
+      titleText.characters = label;
+      titleText.fontSize = 10;
+      titleText.fontName = { family: "Inter", style: "Medium" };
+      titleText.x = x;
+      titleText.y = y + SWATCH + 4;
+      titleText.fills = [
+        { color: { b: 0.11, g: 0.11, r: 0.11 }, type: "SOLID" },
+      ];
+      frame.appendChild(titleText);
+
+      const cssLabel = figma.createText();
+      cssLabel.name = "CSS";
+      cssLabel.textAutoResize = "TRUNCATE";
+      cssLabel.resize(SWATCH, 12);
+      cssLabel.characters = c.gradient;
+      cssLabel.fontSize = 7;
+      cssLabel.fontName = { family: "Inter", style: "Regular" };
+      cssLabel.x = x;
+      cssLabel.y = y + SWATCH + 18;
+      cssLabel.fills = [{ color: { b: 0.4, g: 0.4, r: 0.4 }, type: "SOLID" }];
+      frame.appendChild(cssLabel);
+
+      continue;
+    }
 
     const swatch = figma.createRectangle();
     swatch.name = c.variableName || c.formats.hex;
@@ -213,17 +255,18 @@ async function createColorFrame(colors: ExtractedColor[]) {
     swatch.fills = [{ color: { b: cb, g: cg, r: cr }, type: "SOLID" }];
     frame.appendChild(swatch);
 
-    const nameText = figma.createText();
-    nameText.name = "Name";
-    nameText.textAutoResize = "TRUNCATE";
-    nameText.resize(SWATCH, 14);
-    nameText.characters = c.nodeName;
-    nameText.fontSize = 10;
-    nameText.fontName = { family: "Inter", style: "Medium" };
-    nameText.x = x;
-    nameText.y = y + SWATCH + 4;
-    nameText.fills = [{ color: { b: 0.11, g: 0.11, r: 0.11 }, type: "SOLID" }];
-    frame.appendChild(nameText);
+    const label = c.variableName || c.nodeName || "Unlinked";
+    const titleText = figma.createText();
+    titleText.name = "Title";
+    titleText.textAutoResize = "TRUNCATE";
+    titleText.resize(SWATCH, 14);
+    titleText.characters = label;
+    titleText.fontSize = 10;
+    titleText.fontName = { family: "Inter", style: "Medium" };
+    titleText.x = x;
+    titleText.y = y + SWATCH + 4;
+    titleText.fills = [{ color: { b: 0.11, g: 0.11, r: 0.11 }, type: "SOLID" }];
+    frame.appendChild(titleText);
 
     const hexLabel = figma.createText();
     hexLabel.name = "Hex";
@@ -234,18 +277,6 @@ async function createColorFrame(colors: ExtractedColor[]) {
     hexLabel.y = y + SWATCH + 18;
     hexLabel.fills = [{ color: { b: 0.4, g: 0.4, r: 0.4 }, type: "SOLID" }];
     frame.appendChild(hexLabel);
-
-    if (c.variableName) {
-      const varName = figma.createText();
-      varName.name = "Variable";
-      varName.characters = c.variableName;
-      varName.fontSize = 8;
-      varName.fontName = { family: "Inter", style: "Regular" };
-      varName.x = x;
-      varName.y = y + SWATCH + 30;
-      varName.fills = [{ color: { b: 0.6, g: 0.6, r: 0.6 }, type: "SOLID" }];
-      frame.appendChild(varName);
-    }
   }
 
   const totalH = contentY + rows * ROW_H + PAD;

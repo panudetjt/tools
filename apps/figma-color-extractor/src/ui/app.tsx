@@ -41,12 +41,13 @@ interface ColorFormats {
 
 interface ExtractedColor {
   formats: ColorFormats;
+  gradient?: string;
   nodeId: string;
   nodeName: string;
+  paint?: Record<string, unknown>;
   property: string;
   swatch: string;
   variableName: string;
-  gradient?: string;
 }
 
 function getCardId(c: ExtractedColor): string {
@@ -383,6 +384,55 @@ function FormatRow({
 
 const TOOLBAR_DIVIDER = <div className="mx-0.5 h-4 w-px bg-edge" />;
 
+interface GradientStop {
+  color: { a: number; b: number; g: number; r: number };
+  position: number;
+}
+
+function paintToCss(paint: Record<string, unknown>): string {
+  const type = paint.type as string;
+  const stops = (paint.gradientStops as GradientStop[]) ?? [];
+  if (stops.length === 0) return "";
+
+  const cssStops = stops
+    .map((s) => {
+      const { a, b, g, r } = s.color;
+      const rgb = `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
+      const pos = `${Math.round(s.position * 100)}%`;
+      return a < 1 ? `rgba(${rgb}, ${a}) ${pos}` : `rgb(${rgb}) ${pos}`;
+    })
+    .join(", ");
+
+  const tf = paint.gradientTransform as number[][] | undefined;
+
+  if (type === "GRADIENT_LINEAR" && tf) {
+    const deg =
+      ((Math.atan2(tf[0][0], tf[1][0] ?? 0) * 180) / Math.PI + 360) % 360;
+    return `linear-gradient(${Math.round(deg)}deg, ${cssStops})`;
+  }
+  if (type === "GRADIENT_RADIAL") {
+    return `radial-gradient(circle, ${cssStops})`;
+  }
+  if (type === "GRADIENT_ANGULAR" && tf) {
+    const deg =
+      ((Math.atan2(tf[0][0], tf[1][0] ?? 0) * 180) / Math.PI + 360) % 360;
+    return `conic-gradient(from ${Math.round(deg)}deg, ${cssStops})`;
+  }
+  if (type === "GRADIENT_DIAMOND") {
+    return `conic-gradient(from 45deg, ${cssStops})`;
+  }
+  return "";
+}
+
+function getGradientType(paint?: Record<string, unknown>): string {
+  const t = paint?.type as string | undefined;
+  if (t === "GRADIENT_LINEAR") return "Linear";
+  if (t === "GRADIENT_RADIAL") return "Radial";
+  if (t === "GRADIENT_ANGULAR") return "Conic";
+  if (t === "GRADIENT_DIAMOND") return "Diamond";
+  return "Gradient";
+}
+
 // --- Gradient Card ---
 
 const GradientCard = memo(function GradientCard({
@@ -396,6 +446,8 @@ const GradientCard = memo(function GradientCard({
   const title = color.variableName || color.nodeName || "Unlinked";
   const cardId = getCardId(color);
   const isSelected = selectedIds.has(cardId);
+  const gType = getGradientType(color.paint);
+  const gCss = color.paint ? paintToCss(color.paint) : (color.gradient ?? "");
 
   return (
     <div
@@ -421,14 +473,14 @@ const GradientCard = memo(function GradientCard({
         <button
           type="button"
           className="h-7 w-12 shrink-0 rounded-md border border-edge shadow-sm transition-transform duration-100 hover:scale-110 cursor-pointer"
-          style={{ background: color.gradient }}
+          style={{ background: gCss }}
           onClick={() => postMessage("focus-node", { nodeId: color.nodeId })}
           title="Focus in canvas"
         />
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-medium text-fg">{title}</p>
-          <p className="truncate text-[10px] text-fg-muted">gradient</p>
+          <p className="truncate text-[10px] text-fg-muted">{gType}</p>
         </div>
 
         <button
@@ -557,12 +609,13 @@ const Toolbar = memo(function Toolbar() {
   function handleCanvas() {
     const data: ExtractedColor[] = [];
     for (const c of viewColors) {
-      if (c.gradient) continue;
       if (!selectedIds.has(getCardId(c))) continue;
       data.push({
         formats: { ...c.formats },
+        gradient: c.gradient,
         nodeId: c.nodeId,
         nodeName: c.nodeName,
+        paint: c.paint,
         property: c.property,
         swatch: c.swatch,
         variableName: c.variableName,

@@ -102,7 +102,7 @@ function formatStopColor(color: {
 }
 
 function extractAngle([[a, ,], [c, ,]]: GradientTransform): number {
-  const deg = (Math.atan2(a, -c) * 180) / Math.PI;
+  const deg = (Math.atan2(a, c) * 180) / Math.PI;
   return ((deg % 360) + 360) % 360;
 }
 
