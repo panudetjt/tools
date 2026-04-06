@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@nanostores/preact": "^1.1.0",
+    "jszip": "^3.10.1",
     "nanostores": "^1.2.0",
     "preact": "^10.25.0"
   },

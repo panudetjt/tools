@@ -82,25 +82,36 @@ async function exportSvg(useCurrentColor: boolean) {
     return;
   }
 
-  const [node] = sel;
-  if (!node) return;
-  try {
-    let svgString = await node.exportAsync({ format: "SVG_STRING" });
-    if (useCurrentColor) {
-      svgString = replaceColorsWithCurrent(svgString);
+  const items = [];
+  for (const node of sel) {
+    if (!node) continue;
+    try {
+      let svgString = await node.exportAsync({ format: "SVG_STRING" });
+      if (useCurrentColor) {
+        svgString = replaceColorsWithCurrent(svgString);
+      }
+      items.push({
+        fileName: sanitizeFileName(node.name),
+        name: node.name,
+        svg: svgString,
+      });
+    } catch {
+      // skip nodes that fail to export
     }
+  }
+
+  if (items.length === 0) {
     figma.ui.postMessage({
-      fileName: `${sanitizeFileName(node.name)}.svg`,
-      svg: svgString,
-      type: "svg-result",
-    });
-  } catch (error) {
-    const message = (error && (error as Error).message) || "Export failed";
-    figma.ui.postMessage({
-      error: message,
+      error: "Export failed",
       type: "export-error",
     });
+    return;
   }
+
+  figma.ui.postMessage({
+    items: items,
+    type: "svg-result",
+  });
 }
 
 figma.showUI(__html__, { height: 480, themeColors: true, width: 320 });
