@@ -106,6 +106,60 @@ export function convertCase(label: string, style: CaseStyle): string {
   }
 }
 
+const SYMBOL_NAMES: Record<string, string> = {
+  "!": "bang",
+  "#": "hash",
+  $: "dollar",
+  "%": "percent",
+  "&": "ampersand",
+  "*": "star",
+  "+": "plus",
+  ",": "comma",
+  "-": "dash",
+  ".": "dot",
+  "/": "slash",
+  ":": "colon",
+  ";": "semicolon",
+  "=": "equals",
+  "?": "question",
+  "@": "at",
+  "\\": "backslash",
+  "^": "caret",
+  _: "underscore",
+  "|": "pipe",
+  "~": "tilde",
+};
+
+function resolveSymbolName(label: string): string {
+  if (label.length === 0) return "color";
+  if (label.length === 1) return SYMBOL_NAMES[label] ?? "color";
+  if (new Set(label).size === 1) {
+    const name = SYMBOL_NAMES[label[0]];
+    return name ? `${name}${label.length}` : "color";
+  }
+  return "color";
+}
+
+/**
+ * Sanitizes a converted name for use as an identifier in the target language.
+ * - When convertCase produces an empty string (e.g. label is a symbol like "*"),
+ *   resolves to a readable symbol name (e.g. "star") and applies the casing.
+ * - Prefixes with "_" when the name starts with a digit and the language
+ *   requires valid identifiers (CSS class, Sass, TypeScript, JavaScript).
+ */
+function sanitizeName(
+  converted: string,
+  fallback: string,
+  language: LanguageFormat,
+  casing: CaseStyle
+): string {
+  let name = converted || convertCase(resolveSymbolName(fallback), casing);
+  if (language === "json" || language === "cssVariable") return name;
+  if (/^[0-9]/.test(name)) name = `_${name}`;
+  if (!/^[a-zA-Z_$]/.test(name)) name = `_${name}`;
+  return name;
+}
+
 /**
  * Formats a color value as a single declaration in the specified language and
  * casing style. The output color value preserves the original input format
@@ -123,7 +177,12 @@ export function formatColor(
   language: LanguageFormat,
   casing: CaseStyle
 ): string {
-  const name = convertCase(label, casing);
+  const name = sanitizeName(
+    convertCase(label, casing),
+    label,
+    language,
+    casing
+  );
 
   switch (language) {
     case "json": {
@@ -176,60 +235,126 @@ export function exportAll(
 }
 
 /**
+ * Deduplicates labels by appending a numbered suffix to subsequent duplicates.
+ * First occurrence keeps the original label, subsequent ones get " 1", " 2", etc.
+ */
+function deduplicateLabels<T extends { label: string }>(items: T[]): T[] {
+  const counts = new Map<string, number>();
+  return items.map((item) => {
+    const count = counts.get(item.label) ?? 0;
+    counts.set(item.label, count + 1);
+    if (count === 0) return item;
+    return { ...item, label: `${item.label} ${count}` };
+  });
+}
+
+function formatComment(
+  nodeName: string,
+  property: string,
+  language: LanguageFormat
+): string {
+  if (language === "json") return "";
+  const text = `${nodeName} - ${property}`;
+  if (language === "css" || language === "cssVariable") {
+    return ` /* ${text} */`;
+  }
+  return ` // ${text}`;
+}
+
+/**
  * Formats multiple colors as combined declarations in the specified language
  * and casing style. Produces a single output string with all declarations.
+ * Duplicate labels are resolved with numbered suffixes. Each line includes an
+ * inline comment with the original node name (except JSON which has no comments).
  */
 export function formatBulk(
-  colors: { color: string; label: string }[],
+  colors: {
+    color: string;
+    label: string;
+    nodeName: string;
+    property: string;
+  }[],
   language: LanguageFormat,
   casing: CaseStyle
 ): string {
   if (colors.length === 0) return "";
 
+  const deduped = deduplicateLabels(colors);
+
   switch (language) {
     case "json": {
-      const entries = colors.map(({ color, label }) => {
-        const name = convertCase(label, casing);
+      const entries = deduped.map(({ color, label }) => {
+        const name = sanitizeName(
+          convertCase(label, casing),
+          label,
+          language,
+          casing
+        );
         return `  "${name}": "${color}"`;
       });
       return `{\n${entries.join(",\n")}\n}`;
     }
     case "css": {
-      return colors
-        .map(({ color, label }) => {
-          const name = convertCase(label, casing);
-          return `.${name} { color: ${color}; }`;
+      return deduped
+        .map(({ color, label, nodeName, property }) => {
+          const name = sanitizeName(
+            convertCase(label, casing),
+            label,
+            language,
+            casing
+          );
+          return `.${name} { color: ${color}; }${formatComment(nodeName, property, language)}`;
         })
         .join("\n");
     }
     case "cssVariable": {
-      const entries = colors.map(({ color, label }) => {
-        const name = convertCase(label, casing);
-        return `  --${name}: ${color}`;
+      const entries = deduped.map(({ color, label, nodeName, property }) => {
+        const name = sanitizeName(
+          convertCase(label, casing),
+          label,
+          language,
+          casing
+        );
+        return `  --${name}: ${color}${formatComment(nodeName, property, language)}`;
       });
       return `:root {\n${entries.join(";\n")};\n}`;
     }
     case "sass": {
-      return colors
-        .map(({ color, label }) => {
-          const name = convertCase(label, casing);
-          return `$${name}: ${color};`;
+      return deduped
+        .map(({ color, label, nodeName, property }) => {
+          const name = sanitizeName(
+            convertCase(label, casing),
+            label,
+            language,
+            casing
+          );
+          return `$${name}: ${color};${formatComment(nodeName, property, language)}`;
         })
         .join("\n");
     }
     case "typescript": {
-      return colors
-        .map(({ color, label }) => {
-          const name = convertCase(label, casing);
-          return `export const ${name}: string = "${color}";`;
+      return deduped
+        .map(({ color, label, nodeName, property }) => {
+          const name = sanitizeName(
+            convertCase(label, casing),
+            label,
+            language,
+            casing
+          );
+          return `export const ${name}: string = "${color}";${formatComment(nodeName, property, language)}`;
         })
         .join("\n");
     }
     case "javascript": {
-      return colors
-        .map(({ color, label }) => {
-          const name = convertCase(label, casing);
-          return `export const ${name} = "${color}";`;
+      return deduped
+        .map(({ color, label, nodeName, property }) => {
+          const name = sanitizeName(
+            convertCase(label, casing),
+            label,
+            language,
+            casing
+          );
+          return `export const ${name} = "${color}";${formatComment(nodeName, property, language)}`;
         })
         .join("\n");
     }

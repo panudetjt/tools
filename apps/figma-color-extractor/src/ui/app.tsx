@@ -903,6 +903,8 @@ function BulkExportModal() {
       selectedColors.map((c) => ({
         color: c.gradient || c.formats[exportFormat],
         label: c.variableName || c.nodeName || "Unlinked",
+        nodeName: c.nodeName || "Unlinked",
+        property: c.property,
       })),
       exportLang,
       casing
