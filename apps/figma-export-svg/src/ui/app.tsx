@@ -1,7 +1,8 @@
 import { useStore } from "@nanostores/preact";
-import JSZip from "jszip";
 import { atom } from "nanostores";
 import { memo } from "preact/compat";
+
+import { createZip } from "./zip";
 
 function postMessage(type: string, data?: Record<string, unknown>) {
   parent.postMessage({ pluginMessage: { type, ...data } }, "*");
@@ -195,13 +196,12 @@ function getCombinedOutput(items: ExportItem[], format: ExportFormat) {
   return { content, fileName, mime: "text/typescript" };
 }
 
-async function downloadZip(items: ExportItem[], format: ExportFormat) {
-  const zip = new JSZip();
-  for (const item of items) {
+function downloadZip(items: ExportItem[], format: ExportFormat) {
+  const files = items.map((item) => {
     const { content, fileName } = getItemOutput(item, format);
-    zip.file(fileName, content);
-  }
-  const blob = await zip.generateAsync({ type: "blob" });
+    return { content, fileName };
+  });
+  const blob = createZip(files);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -245,7 +245,7 @@ window.addEventListener("message", (event: MessageEvent) => {
         copyToClipboard(content);
       } else if (action === "download") {
         if (msg.items.length > 1) {
-          void downloadZip(msg.items, format);
+          downloadZip(msg.items, format);
         } else {
           downloadFile(content, fileName, mime);
         }

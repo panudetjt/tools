@@ -23,6 +23,13 @@
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off"
       }
+    },
+    {
+      "files": ["**/zip.ts"],
+      "rules": {
+        "no-bitwise": "off",
+        "unicorn/prefer-math-trunc": "off"
+      }
     }
   ]
 }
