@@ -15,7 +15,8 @@
     {
       "files": ["src/ui/**/*.tsx"],
       "rules": {
-        "react-perf/jsx-no-new-function-as-prop": "off" // in preact + nanostores might not make sense
+        "react-perf/jsx-no-new-function-as-prop": "off", // in preact + nanostores might not make sense
+        "react/no-danger": "off" // SVG preview renders trusted Figma-exported content
       }
     },
     {
@@ -29,6 +30,7 @@
       "rules": {
         "no-bitwise": "off",
         "unicorn/prefer-math-trunc": "off"
+        // "unicorn/number-literal-case": "off" // conflicts with oxfmt which formats hex to lowercase
       }
     }
   ]

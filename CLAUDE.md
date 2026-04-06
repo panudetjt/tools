@@ -41,6 +41,15 @@
 
 ## Workflow
 
+### Definition of Done
+
+Every change MUST pass the full workflow before being considered complete:
+
+1. `bun run check` - lint and format check (zero warnings, zero errors)
+2. `bun run check-types` - TypeScript type check (zero errors)
+
+If check or type-check fails, fix the errors. Do not leave the workspace in a failing state.
+
 ### Lint/Format
 
 MUST run from the monorepo root (`tools/`):
