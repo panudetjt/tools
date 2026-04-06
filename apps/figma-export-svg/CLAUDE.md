@@ -25,10 +25,13 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 
 ### Source Layout
 
-- `src/main.ts` - Plugin sandbox entry. Has access to `figma` global and `__html__` (string contents of ui.html).
+- `src/main.ts` - Plugin sandbox entry. Has access to `figma` global and `__html__` (string contents of ui.html). Handles multi-node selection, SVG export, and currentColor replacement.
 - `src/ui/` - Preact/compat + Nanostores UI built by Vite. Entry: `ui.html` -> `main.tsx` -> `app.tsx`.
+- `src/ui/app.tsx` - Main app component with stores, SVG-to-JSX converter, format selector, preview, copy/download actions.
+- `src/ui/zip.ts` - Minimal ZIP creator for multi-file downloads (~2KB). Pure JS with CRC32 and stored (uncompressed) entries.
+- `src/ui/zip.test.ts` - Tests for zip.ts using `unzip` CLI to validate output integrity.
 - `src/ui/tsconfig.json` - Separate TS config for UI (DOM libs, bundler module resolution).
-- `docs/` - Decision records and technical notes.
+- `docs/` - Decision records and technical notes. formatted with {running-number}-{title}.md
 - `tsconfig.json` - TS config for plugin sandbox (es2020 target, `@figma/plugin-typings`).
 
 ### Build Constraints
@@ -56,6 +59,8 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 
 - **UI**: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
 - **Plugin sandbox**: TypeScript, tsdown (IIFE bundler, ES2015 target)
+- **SVG-to-JSX**: Built-in converter with attribute camelCasing, style object transform, PascalCase component names
+- **Zip bundling**: Built-in minimal ZIP creator (CRC32 + stored entries, ~2KB)
 - **Animations**: tw-animate-css
 - **Linting**: Oxlint with `@figma/eslint-plugin-figma-plugins` rules
 - **Package manager**: bun
