@@ -20,7 +20,9 @@ Figma plugin that extracts colors from selected elements and exports them in mul
 - Bulk export with duplicate label deduplication and inline comments showing source node name and property type
 - Label sanitization: digit-prefixed names auto-prefixed with `_`, special characters resolved to readable names (e.g., `*` to `star`)
 - Copy individual values or export/download formatted code
-- Add selected colors to Figma canvas as a palette frame
+- Add selected colors and gradients to Figma canvas as a palette frame, using original Figma paint objects for 1:1 visual fidelity
+- Canvas swatches display color names (variable name, node name, or "Unlinked") with hex values; gradient swatches show CSS gradient strings
+- Gradient cards in the UI display the gradient type (Linear, Radial, Conic, Diamond) read from the original paint
 - Automatic light/dark theme support matching Figma's UI theme
 - Smooth enter/exit animations on export modal
 
