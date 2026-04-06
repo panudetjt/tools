@@ -29,7 +29,6 @@ const $selectionInfo = atom({
 const $useCurrentColor = atom(true);
 const $format = atom<ExportFormat>("svg");
 const $exportItems = atom<ExportItem[]>([]);
-const $svgPreview = atom<string | null>(null);
 const $error = atom<string | null>(null);
 const $busy = atom<string | null>(null);
 const $copied = atom(false);
@@ -227,13 +226,11 @@ window.addEventListener("message", (event: MessageEvent) => {
       postMessage("export-svg", { useCurrentColor: $useCurrentColor.get() });
     } else {
       $exportItems.set([]);
-      $svgPreview.set(null);
     }
   }
 
   if (msg.type === "svg-result") {
     $exportItems.set(msg.items);
-    $svgPreview.set(msg.items.length > 0 ? msg.items[0].svg : null);
     $error.set(null);
 
     const action = $busy.get();
@@ -504,17 +501,26 @@ const ActionButtons = memo(function ActionButtons() {
 });
 
 const SvgPreview = memo(function SvgPreview() {
-  const svg = useStore($svgPreview);
+  const items = useStore($exportItems);
 
-  if (!svg) return null;
+  if (items.length === 0) return null;
 
   return (
-    <div
-      className="max-h-40 overflow-auto rounded-lg border border-edge p-2"
-      style={{ background: "var(--color-checkerboard)" }}
-      // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+    <div className="overflow-auto rounded-lg border border-edge p-2">
+      {items.map((item) => (
+        <div key={item.fileName} className="flex flex-col gap-1">
+          {items.length > 1 && (
+            <span className="truncate text-[11px] text-fg-dim">
+              {item.name}
+            </span>
+          )}
+          <div
+            style={{ background: "var(--color-checkerboard)" }}
+            dangerouslySetInnerHTML={{ __html: item.svg }}
+          />
+        </div>
+      ))}
+    </div>
   );
 });
 
