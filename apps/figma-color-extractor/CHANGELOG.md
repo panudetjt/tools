@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0 - 2026-04-06
+
+### Features
+
+- **Canvas color names** - Color swatches on the Figma canvas now display a title (variable name, node name, or "Unlinked") with the hex value below. Gradient swatches show the CSS gradient string instead of hex.
+- **Canvas gradient support** - Gradient fills can now be exported to the Figma canvas. The original Figma `Paint` object is used directly for 1:1 visual fidelity, with the CSS gradient string shown as a label.
+- **UI gradient type labels** - Gradient cards in the plugin UI now display the gradient type (Linear, Radial, Conic, Diamond) read from the original paint object instead of a hardcoded "gradient" label.
+- **UI gradient rendering from paint** - Gradient swatch previews in the plugin UI are now computed directly from the original Figma `Paint` object using a local CSS converter, rather than relying on a pre-computed CSS string.
+
+### Bug Fixes
+
+- Fixed gradient angle conversion producing incorrect CSS `linear-gradient` directions. The `extractAngle` function used `atan2(a, -c)` but Figma's gradient transform stores `[sin(a), cos(a)]`, requiring `atan2(a, c)`. For example, a gradient from upper-right to lower-left now correctly produces `204deg` instead of `337deg`.
+- Fixed color name label overflow on canvas swatches by using Figma's native `textAutoResize = "TRUNCATE"` property constrained to the swatch width, replacing manual character-based truncation that didn't account for variable character widths.
+
 ## 1.1.0 - 2026-04-06
 
 ### Features
