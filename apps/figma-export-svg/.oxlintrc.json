@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.json"],
+  "plugins": ["typescript"],
+  "jsPlugins": ["@figma/eslint-plugin-figma-plugins"],
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["dist"],
+  "rules": {
+    "unicorn/prefer-dom-node-append": "off", // oxlint thinks appendChild is a DOM node method, but it's the Figma API. That rule doesn't apply to Figma plugin types
+    "unicorn/require-post-message-target-origin": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/ui/**/*.tsx"],
+      "rules": {
+        "react-perf/jsx-no-new-function-as-prop": "off" // in preact + nanostores might not make sense
+      }
+    },
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "@typescript-eslint/no-non-null-assertion": "off"
+      }
+    }
+  ]
+}
