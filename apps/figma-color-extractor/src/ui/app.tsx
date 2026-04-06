@@ -418,9 +418,12 @@ const GradientCard = memo(function GradientCard({
           {isSelected && <CheckIcon />}
         </button>
 
-        <div
-          className="h-7 w-12 shrink-0 rounded-md border border-edge shadow-sm"
+        <button
+          type="button"
+          className="h-7 w-12 shrink-0 rounded-md border border-edge shadow-sm transition-transform duration-100 hover:scale-110 cursor-pointer"
           style={{ background: color.gradient }}
+          onClick={() => postMessage("focus-node", { nodeId: color.nodeId })}
+          title="Focus in canvas"
         />
 
         <div className="min-w-0 flex-1">
@@ -486,9 +489,12 @@ const ColorCard = memo(function ColorCard({
           {isSelected && <CheckIcon />}
         </button>
 
-        <div
-          className="h-7 w-7 shrink-0 rounded-md border border-edge shadow-sm"
+        <button
+          type="button"
+          className="h-7 w-7 shrink-0 rounded-md border border-edge shadow-sm transition-transform duration-100 hover:scale-110 cursor-pointer"
           style={{ backgroundColor: color.swatch }}
+          onClick={() => postMessage("focus-node", { nodeId: color.nodeId })}
+          title="Focus in canvas"
         />
 
         <div className="min-w-0 flex-1">

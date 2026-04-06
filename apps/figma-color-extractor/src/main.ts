@@ -242,16 +242,28 @@ async function createColorFrame(colors: ExtractedColor[]) {
   figma.viewport.scrollAndZoomIntoView([frame]);
 }
 
-figma.ui.on("message", (msg: { type: string; colors?: ExtractedColor[] }) => {
-  if (msg.type === "extract-colors") {
-    void extractAndSend();
-  }
+figma.ui.on(
+  "message",
+  async (msg: { colors?: ExtractedColor[]; nodeId?: string; type: string }) => {
+    if (msg.type === "extract-colors") {
+      void extractAndSend();
+    }
 
-  if (msg.type === "add-to-canvas" && msg.colors) {
-    void createColorFrame(msg.colors);
-  }
+    if (msg.type === "add-to-canvas" && msg.colors) {
+      void createColorFrame(msg.colors);
+    }
 
-  if (msg.type === "cancel") {
-    figma.closePlugin();
+    if (msg.type === "cancel") {
+      figma.closePlugin();
+    }
+
+    if (msg.type === "focus-node" && msg.nodeId) {
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
+      if (node && "id" in node) {
+        const sceneNode = node as SceneNode;
+        figma.currentPage.selection = [sceneNode];
+        figma.viewport.scrollAndZoomIntoView([sceneNode]);
+      }
+    }
   }
-});
+);
