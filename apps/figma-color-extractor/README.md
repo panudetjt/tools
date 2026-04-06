@@ -15,15 +15,21 @@ Figma plugin that extracts colors from selected elements and exports them in mul
 - Gradient mode toggle to view CSS gradients instead of individual stops
 - Smart deduplication hides redundant stops when gradient CSS is shown
 - Multi-select colors for batch operations
+- Click-to-focus: click any color swatch to select and zoom to its source node on the canvas
 - Export to 6 languages (CSS, CSS Variables, Sass, TypeScript, JavaScript, JSON) with 6 casing styles
+- Bulk export with duplicate label deduplication and inline comments showing source node name and property type
+- Label sanitization: digit-prefixed names auto-prefixed with `_`, special characters resolved to readable names (e.g., `*` to `star`)
 - Copy individual values or export/download formatted code
 - Add selected colors to Figma canvas as a palette frame
+- Automatic light/dark theme support matching Figma's UI theme
+- Smooth enter/exit animations on export modal
 
 ## Tech Stack
 
 - UI: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
-- Plugin sandbox: TypeScript, tsdown (IIFE)
+- Plugin sandbox: TypeScript, tsdown (IIFE, ES2015 target)
 - Color conversion: culori
+- Animations: tw-animate-css
 - Package manager: bun
 
 ## Development
@@ -33,6 +39,7 @@ bun install          # install dependencies
 bun run dev          # watch mode (UI + main)
 bun run build        # production build
 bun run check-type   # type check
+bun test             # run tests
 ```
 
 Run lint/format from the monorepo root:
@@ -47,7 +54,7 @@ bun run check        # ultracite check
 
 Dual-build system producing two outputs into `dist/`:
 
-- `dist/main.iife.js` - Plugin sandbox (tsdown, IIFE). Access to `figma` global API, no DOM.
+- `dist/main.iife.js` - Plugin sandbox (tsdown, IIFE, ES2015 target). Access to `figma` global API, no DOM.
 - `dist/ui.html` - Plugin UI (Vite + vite-plugin-singlefile). Self-contained HTML with all JS/CSS inlined.
 
 UI and main communicate via `parent.postMessage` / `figma.ui.postMessage`.
@@ -61,5 +68,10 @@ src/
   ui/
     main.tsx       - UI entry point
     app.tsx        - Main app component with stores, toolbar, cards, export modal
-    color-export.ts - Export formatting (languages, casing styles), clipboard helper
+    app.css        - TailwindCSS v4 imports and @theme semantic token definitions
+    color-export.ts - Export formatting (languages, casing styles), label sanitization, clipboard helper
+    color-export.test.ts - Unit tests for color export utilities
+docs/
+  adr/             - Architecture decision records
+  assets/          - Plugin icon and images
 ```

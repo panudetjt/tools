@@ -37,17 +37,33 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 - `emptyOutDir: false` prevents Vite from deleting `dist/main.iife.js` during UI build.
 - `clean: false` in tsdown prevents deleting `dist/ui.html` during main build.
 - tsdown outputs IIFE format (not ESM) because Figma sandbox does not support `export` syntax.
+- tsdown targets ES2015 because Figma's sandbox does not support ES2021+ syntax (optional chaining, nullish coalescing).
 - TailwindCSS v4 uses `@import "tailwindcss"` with `@tailwindcss/vite` plugin (no config file).
+
+### UI Theming
+
+- Figma's `themeColors: true` option injects CSS variables (`--figma-color-bg`, `--figma-color-text`, etc.) into the plugin iframe.
+- Tailwind v4 `@theme` block in `src/ui/app.css` maps these to semantic tokens (`surface`, `fg`, `edge`, `brand`).
+- All UI components use semantic tokens only - no hardcoded colors.
+
+### Export Label Sanitization
+
+- `sanitizeName()` in `src/ui/color-export.ts` handles invalid identifiers.
+- Names starting with a digit get `_` prefix in CSS, Sass, TypeScript, JavaScript (not JSON or CSS variables).
+- Names with only special characters resolve to readable symbol names via `SYMBOL_NAMES` map (e.g., `*` -> `star`).
+- Resolved symbol names are passed through `convertCase()` so they respect the export casing style.
+- `formatBulk()` deduplicates labels with numbered suffixes and includes inline comments with node name + property type.
 
 ### Key Config Files
 
 - `manifest.json` - Figma plugin manifest. Points `main` and `ui` to `dist/` outputs.
 - `vite.config.ts` - Vite config with Preact/compat, Nanostores, TailwindCSS, and singlefile plugins. `root: "src/ui"`.
-- `tsdown.config.ts` - Bundles `src/main.ts` as ESM for browser platform.
+- `tsdown.config.ts` - Bundles `src/main.ts` as IIFE targeting ES2015 for Figma sandbox compatibility.
 
 ## Tech Stack
 
 - **UI**: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
-- **Plugin sandbox**: TypeScript, tsdown (ESM bundler)
+- **Plugin sandbox**: TypeScript, tsdown (IIFE bundler, ES2015 target)
+- **Animations**: tw-animate-css
 - **Linting**: Oxlint with `@figma/eslint-plugin-figma-plugins` rules
 - **Package manager**: bun

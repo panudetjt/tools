@@ -1,7 +1,7 @@
 {
   "name": "Color Extractor",
   "id": "1621428294023657889",
-  "api": "1.0.0",
+  "api": "1.1.0",
   "main": "dist/main.iife.js",
   "capabilities": [],
   "enableProposedApi": false,
