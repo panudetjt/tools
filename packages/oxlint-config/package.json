@@ -26,6 +26,6 @@
   },
   "peerDependencies": {
     "oxlint": "^1.58.0",
-    "ultracite": "7.4.2"
+    "ultracite": "7.4.3"
   }
 }
