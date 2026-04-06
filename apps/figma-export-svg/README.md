@@ -1,5 +1,7 @@
 # Export SVG
 
+<img src="./docs/assets/export-svg-icon.svg" width="48px" />
+
 Figma plugin that exports selected nodes as SVG files or JSX components, with optional currentColor replacement for themable icons.
 
 ## Features
