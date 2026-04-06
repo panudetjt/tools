@@ -26,3 +26,7 @@ tsdown supports targeting older ES versions via `target: "es2015"`, which downle
 - tsdown remains a devDependency (powered by rolldown)
 - The Bun runtime is used for running scripts and as package manager, but not for bundling the main thread
 - If Bun adds ES version targets in the future, this decision can be revisited
+
+## Reference
+
+- [Bun Bundler](https://bun.com/docs/bundler/esbuild#:~:text=No%20support%20for%20syntax%20downleveling)
