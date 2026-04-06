@@ -169,7 +169,7 @@ async function createColorFrame(colors: ExtractedColor[]) {
   const SWATCH = 64;
   const GAP = 16;
   const PAD = 24;
-  const ROW_H = SWATCH + 28;
+  const ROW_H = SWATCH + 42;
   const FRAME_W = 420;
   const COLS = 4;
   const rows = Math.ceil(colors.length / COLS);
@@ -213,15 +213,27 @@ async function createColorFrame(colors: ExtractedColor[]) {
     swatch.fills = [{ color: { b: cb, g: cg, r: cr }, type: "SOLID" }];
     frame.appendChild(swatch);
 
-    const label = figma.createText();
-    label.name = "Label";
-    label.characters = c.formats.hex.toUpperCase();
-    label.fontSize = 10;
-    label.fontName = { family: "Inter", style: "Medium" };
-    label.x = x;
-    label.y = y + SWATCH + 4;
-    label.fills = [{ color: { b: 0.4, g: 0.4, r: 0.4 }, type: "SOLID" }];
-    frame.appendChild(label);
+    const nameText = figma.createText();
+    nameText.name = "Name";
+    nameText.textAutoResize = "TRUNCATE";
+    nameText.resize(SWATCH, 14);
+    nameText.characters = c.nodeName;
+    nameText.fontSize = 10;
+    nameText.fontName = { family: "Inter", style: "Medium" };
+    nameText.x = x;
+    nameText.y = y + SWATCH + 4;
+    nameText.fills = [{ color: { b: 0.11, g: 0.11, r: 0.11 }, type: "SOLID" }];
+    frame.appendChild(nameText);
+
+    const hexLabel = figma.createText();
+    hexLabel.name = "Hex";
+    hexLabel.characters = c.formats.hex.toUpperCase();
+    hexLabel.fontSize = 8;
+    hexLabel.fontName = { family: "Inter", style: "Regular" };
+    hexLabel.x = x;
+    hexLabel.y = y + SWATCH + 18;
+    hexLabel.fills = [{ color: { b: 0.4, g: 0.4, r: 0.4 }, type: "SOLID" }];
+    frame.appendChild(hexLabel);
 
     if (c.variableName) {
       const varName = figma.createText();
@@ -230,7 +242,7 @@ async function createColorFrame(colors: ExtractedColor[]) {
       varName.fontSize = 8;
       varName.fontName = { family: "Inter", style: "Regular" };
       varName.x = x;
-      varName.y = y + SWATCH + 18;
+      varName.y = y + SWATCH + 30;
       varName.fills = [{ color: { b: 0.6, g: 0.6, r: 0.6 }, type: "SOLID" }];
       frame.appendChild(varName);
     }
