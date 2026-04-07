@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import preactPreset from "@preact/preset-vite";
@@ -20,6 +21,21 @@ export default defineConfig({
   plugins: [
     preactPreset(),
     tailwindcss(),
+    {
+      name: "prerender-inject",
+      transformIndexHtml(html: string) {
+        const prerenderedPath = resolve(
+          import.meta.dirname,
+          "src/ui/.prerender.html"
+        );
+        if (!existsSync(prerenderedPath)) return html;
+        const prerendered = readFileSync(prerenderedPath, "utf-8");
+        return html.replace(
+          '<div id="app"></div>',
+          `<div id="app">${prerendered}</div>`
+        );
+      },
+    },
     viteSingleFile({ removeViteModuleLoader: true }),
   ],
   resolve: {

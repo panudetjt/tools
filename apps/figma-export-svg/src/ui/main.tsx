@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { render } from "preact";
+import { hydrate } from "preact";
 
 import App from "./app";
 
@@ -11,4 +11,4 @@ if (!root) {
   throw new Error("#app is missing");
 }
 
-render(<App />, root);
+hydrate(<App />, root);

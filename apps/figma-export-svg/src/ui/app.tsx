@@ -46,14 +46,15 @@ function downloadFile(content: string, fileName: string, type: string) {
 }
 
 function copyToClipboard(text: string) {
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.style.position = "fixed";
-  ta.style.opacity = "0";
-  document.body.append(ta);
-  ta.select();
+  const handler = (e: ClipboardEvent) => {
+    const clipboard = e.clipboardData;
+    if (!clipboard) return;
+    clipboard.setData("text/plain", text);
+    e.preventDefault();
+  };
+  document.addEventListener("copy", handler);
   document.execCommand("copy");
-  ta.remove();
+  document.removeEventListener("copy", handler);
   $copied.set(true);
   setTimeout(() => $copied.set(false), 1500);
 }
@@ -211,51 +212,56 @@ function downloadZip(items: ExportItem[], format: ExportFormat) {
 
 // --- Message Listener ---
 
-window.addEventListener("message", (event: MessageEvent) => {
-  const msg = event.data.pluginMessage;
-  if (!msg) return;
+if (typeof window !== "undefined") {
+  window.addEventListener("message", (event: MessageEvent) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
 
-  if (msg.type === "selection-info") {
-    $selectionInfo.set({
-      count: msg.count,
-      name: msg.name,
-      nodeType: msg.nodeType,
-    });
-    $error.set(null);
-    if (msg.count > 0) {
-      postMessage("export-svg", { useCurrentColor: $useCurrentColor.get() });
-    } else {
-      $exportItems.set([]);
-    }
-  }
-
-  if (msg.type === "svg-result") {
-    $exportItems.set(msg.items);
-    $error.set(null);
-
-    const action = $busy.get();
-    if (action) {
-      const format = $format.get();
-      const { content, fileName, mime } = getCombinedOutput(msg.items, format);
-
-      if (action === "copy") {
-        copyToClipboard(content);
-      } else if (action === "download") {
-        if (msg.items.length > 1) {
-          downloadZip(msg.items, format);
-        } else {
-          downloadFile(content, fileName, mime);
-        }
+    if (msg.type === "selection-info") {
+      $selectionInfo.set({
+        count: msg.count,
+        name: msg.name,
+        nodeType: msg.nodeType,
+      });
+      $error.set(null);
+      if (msg.count > 0) {
+        postMessage("export-svg", { useCurrentColor: $useCurrentColor.get() });
+      } else {
+        $exportItems.set([]);
       }
+    }
+
+    if (msg.type === "svg-result") {
+      $exportItems.set(msg.items);
+      $error.set(null);
+
+      const action = $busy.get();
+      if (action) {
+        const format = $format.get();
+        const { content, fileName, mime } = getCombinedOutput(
+          msg.items,
+          format
+        );
+
+        if (action === "copy") {
+          copyToClipboard(content);
+        } else if (action === "download") {
+          if (msg.items.length > 1) {
+            downloadZip(msg.items, format);
+          } else {
+            downloadFile(content, fileName, mime);
+          }
+        }
+        $busy.set(null);
+      }
+    }
+
+    if (msg.type === "export-error") {
+      $error.set(msg.error);
       $busy.set(null);
     }
-  }
-
-  if (msg.type === "export-error") {
-    $error.set(msg.error);
-    $busy.set(null);
-  }
-});
+  });
+}
 
 // --- Components ---
 
@@ -470,14 +476,16 @@ const ActionButtons = memo(function ActionButtons() {
   const copied = useStore($copied);
   const format = useStore($format);
 
-  const disabled = info.count === 0 || busy !== null;
+  const noSelection = info.count === 0;
+  const copyDisabled = noSelection || busy === "copy";
+  const downloadDisabled = noSelection || busy === "download";
 
   return (
     <div className="flex gap-2">
       <button
         type="button"
         className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg transition-colors hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={disabled}
+        disabled={copyDisabled}
         onClick={() => requestExport("copy")}
       >
         <CopyButtonIcon busy={busy === "copy"} copied={copied} />
@@ -490,7 +498,7 @@ const ActionButtons = memo(function ActionButtons() {
       <button
         type="button"
         className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface-brand px-3 py-2 text-sm font-medium text-fg-onbrand transition-colors hover:bg-surface-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={disabled}
+        disabled={downloadDisabled}
         onClick={() => requestExport("download")}
       >
         <DownloadButtonIcon busy={busy === "download"} />
