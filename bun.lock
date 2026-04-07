@@ -35,11 +35,12 @@
     },
     "apps/figma-color-extractor": {
       "name": "color-extractor",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "dependencies": {
         "@nanostores/preact": "^1.1.0",
         "culori": "^4.0.2",
         "nanostores": "^1.2.0",
+        "preact": "^10.25.0",
       },
       "devDependencies": {
         "@figma/eslint-plugin-figma-plugins": "*",
@@ -49,6 +50,30 @@
         "@types/bun": "^1.3.11",
         "@types/culori": "^4.0.1",
         "concurrently": "^9.2.1",
+        "tailwindcss": "^4.0.0",
+        "tsdown": "^0.21.7",
+        "tw-animate-css": "^1.4.0",
+        "typescript": "6.0.2",
+        "vite": "^8.0.3",
+        "vite-plugin-singlefile": "^2.3.2",
+      },
+    },
+    "apps/figma-export-svg": {
+      "name": "export-svg",
+      "version": "1.1.0",
+      "dependencies": {
+        "@nanostores/preact": "^1.1.0",
+        "nanostores": "^1.2.0",
+        "preact": "^10.25.0",
+      },
+      "devDependencies": {
+        "@figma/eslint-plugin-figma-plugins": "*",
+        "@figma/plugin-typings": "*",
+        "@preact/preset-vite": "^2.10.5",
+        "@tailwindcss/vite": "^4.2.2",
+        "@types/bun": "^1.3.11",
+        "concurrently": "^9.2.1",
+        "preact-render-to-string": "^6.6.7",
         "tailwindcss": "^4.0.0",
         "tsdown": "^0.21.7",
         "tw-animate-css": "^1.4.0",
@@ -84,7 +109,7 @@
     },
     "packages/oxlint-config": {
       "name": "@panudetjt/oxlint-config",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "peerDependencies": {
         "oxlint": "^1.58.0",
         "ultracite": "7.4.3",
@@ -99,13 +124,11 @@
       "version": "0.0.0",
       "dependencies": {
         "react": "^19.2.0",
-        "react-dom": "^19.2.0",
       },
       "devDependencies": {
         "@panudetjt/typescript-config": "*",
         "@types/node": "^22.15.3",
         "@types/react": "19.2.2",
-        "@types/react-dom": "19.2.2",
         "typescript": "6.0.2",
       },
     },
@@ -801,6 +824,8 @@
 
     "esutils": ["esutils@2.0.3", "", {}, "sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g=="],
 
+    "export-svg": ["export-svg@workspace:apps/figma-export-svg"],
+
     "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
 
     "fast-glob": ["fast-glob@3.3.3", "", { "dependencies": { "@nodelib/fs.stat": "^2.0.2", "@nodelib/fs.walk": "^1.2.3", "glob-parent": "^5.1.2", "merge2": "^1.3.0", "micromatch": "^4.0.8" } }, "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg=="],
@@ -1008,6 +1033,8 @@
     "postcss": ["postcss@8.5.8", "", { "dependencies": { "nanoid": "^3.3.11", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-OW/rX8O/jXnm82Ey1k44pObPtdblfiuWnrd8X7GJ7emImCOstunGbXUpp7HdBrFQX6rJzn3sPT397Wp5aCwCHg=="],
 
     "preact": ["preact@10.29.0", "", {}, "sha512-wSAGyk2bYR1c7t3SZ3jHcM6xy0lcBcDel6lODcs9ME6Th++Dx2KU+6D3HD8wMMKGA8Wpw7OMd3/4RGzYRpzwRg=="],
+
+    "preact-render-to-string": ["preact-render-to-string@6.6.7", "", { "peerDependencies": { "preact": ">=10 || >= 11.0.0-0" } }, "sha512-3XdbsX3+vn9dQW+jJI/FsI9rlkgl6dbeUpqLsChak6jp3j3auFqBCkno7VChbMFs5Q8ylBj6DrUkKRwtVN3nvw=="],
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
 

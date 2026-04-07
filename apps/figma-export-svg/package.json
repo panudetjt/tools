@@ -1,8 +1,8 @@
 {
-  "name": "color-extractor",
+  "name": "export-svg",
   "version": "1.2.0",
   "private": true,
-  "description": "Figma plugin to extract colors from selections and export in multiple formats",
+  "description": "Figma plugin to export selected nodes as SVG or JSX components with currentColor replacement",
   "license": "MIT",
   "author": "Panudet <me@panudet.dev>",
   "type": "module",
@@ -10,14 +10,13 @@
   "scripts": {
     "build": "bun run build:ui && bun run build:main",
     "build:main": "tsdown --minify",
-    "build:ui": "vite build",
+    "build:ui": "bun run src/ui/prerender.ts && vite build",
     "dev": "concurrently -n vite,tsdown \"vite build --watch\" \"tsdown --watch src/main.ts\"",
     "watch": "bun run dev",
     "check-type": "tsc --noEmit"
   },
   "dependencies": {
     "@nanostores/preact": "^1.1.0",
-    "culori": "^4.0.2",
     "nanostores": "^1.2.0",
     "preact": "^10.25.0"
   },
@@ -27,8 +26,8 @@
     "@preact/preset-vite": "^2.10.5",
     "@tailwindcss/vite": "^4.2.2",
     "@types/bun": "^1.3.11",
-    "@types/culori": "^4.0.1",
     "concurrently": "^9.2.1",
+    "preact-render-to-string": "^6.6.7",
     "tailwindcss": "^4.0.0",
     "tsdown": "^0.21.7",
     "tw-animate-css": "^1.4.0",

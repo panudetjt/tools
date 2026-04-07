@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  /* Surfaces (backgrounds) */
+  --color-surface: var(--figma-color-bg);
+  --color-surface-dim: var(--figma-color-bg-secondary);
+  --color-surface-raised: var(--figma-color-bg-hover);
+  --color-surface-active: var(--figma-color-bg-brand-tertiary);
+  --color-surface-selected: var(--figma-color-bg-selected-secondary);
+  --color-surface-brand: var(--figma-color-bg-brand);
+  --color-surface-brand-hover: var(--figma-color-bg-brand-hover);
+  --color-surface-inverse: var(--figma-color-bg-inverse);
+  --color-surface-overlay: color-mix(
+    in srgb,
+    var(--figma-color-bg-inverse) 40%,
+    transparent
+  );
+
+  /* Foreground (text + icons via currentColor) */
+  --color-fg: var(--figma-color-text);
+  --color-fg-dim: var(--figma-color-text-secondary);
+  --color-fg-muted: var(--figma-color-text-tertiary);
+  --color-fg-brand: var(--figma-color-text-brand);
+  --color-fg-success: var(--figma-color-text-success);
+  --color-fg-onbrand: var(--figma-color-text-onbrand);
+
+  /* Edges (borders) */
+  --color-edge: var(--figma-color-border);
+  --color-edge-strong: var(--figma-color-border-strong);
+  --color-edge-selected: var(--figma-color-border-selected);
+
+  /* Checkerboard for SVG preview */
+  --color-checkerboard: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='8' height='8' fill='%23ccc'/%3E%3Crect x='8' y='8' width='8' height='8' fill='%23ccc'/%3E%3Crect x='8' width='8' height='8' fill='%23fff'/%3E%3Crect y='8' width='8' height='8' fill='%23fff'/%3E%3C/svg%3E");
+}
