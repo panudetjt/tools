@@ -61,6 +61,23 @@ Main listens: `figma.ui.onmessage = (msg) => {}`
 - **Plugin sandbox**: TypeScript, tsdown (IIFE bundler, ES2015 target)
 - **SVG-to-JSX**: Built-in converter with attribute camelCasing, style object transform, PascalCase component names
 - **Zip bundling**: Built-in minimal ZIP creator (CRC32 + stored entries, ~2KB)
+- **Prerendering**: Build-time static HTML via `preact-render-to-string` + Vite SSR build for instant first paint
 - **Animations**: tw-animate-css
 - **Linting**: Oxlint with `@figma/eslint-plugin-figma-plugins` rules
 - **Package manager**: bun
+
+## Build Pipeline
+
+The UI build runs in two stages:
+
+1. **Prerender** (`bun run src/ui/prerender.ts`) - Uses Vite SSR mode to render the App component to static HTML via `preact-render-to-string`. Outputs to `src/ui/.prerender.html` (gitignored).
+2. **Client build** (`vite build`) - Vite injects the prerendered HTML into `ui.html` via the `prerender-inject` plugin, then bundles and inlines everything with `vite-plugin-singlefile`.
+
+The prerendered HTML provides instant first paint during JS parsing. Preact's `hydrate()` takes over when the script executes.
+
+## Clipboard Constraints
+
+- `navigator.clipboard.writeText()` does not work in Figma's plugin iframe
+- Must use `document.execCommand("copy")` (deprecated but functional)
+- Never append temporary elements to `document.body` or change browser selection - Figma's plugin system detects these mutations and triggers unwanted UI re-renders
+- Use ClipboardEvent handler to set clipboard data without DOM manipulation (see `docs/003-clipboard-copy-event.md`)

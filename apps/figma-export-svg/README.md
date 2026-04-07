@@ -26,6 +26,7 @@ Figma plugin that exports selected nodes as SVG files or JSX components, with op
 - UI: Preact/compat + Nanostores, TailwindCSS v4, Vite 8
 - Plugin sandbox: TypeScript, tsdown (IIFE, ES2015 target)
 - Zip bundling: built-in minimal ZIP creator (~2KB)
+- Build-time prerendering for instant first paint
 - Animations: tw-animate-css
 - Package manager: bun
 

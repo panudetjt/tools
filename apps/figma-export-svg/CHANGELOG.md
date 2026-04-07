@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0 - 2026-04-07
+
+### Features
+
+- **Prerendered UI** - Initial UI state is pre-rendered at build time using `preact-render-to-string` and Vite SSR, providing instant first paint. The static HTML is injected into `ui.html` and Preact hydrates on top.
+
+### Changes
+
+- Added prerender script (`src/ui/prerender.ts`) and SSR entry (`src/ui/prerender-entry.tsx`) for build-time HTML generation
+- Added `prerender-inject` Vite plugin to inject static HTML into `ui.html`
+- Switched from `render` to `hydrate` in UI entry point for seamless pre-render takeover
+- Added `typeof window` guard on `window.addEventListener` for SSR compatibility
+- Clipboard copy now uses ClipboardEvent handler instead of textarea DOM manipulation, eliminating UI re-render blinking in Figma's plugin iframe
+- Action buttons now independently disable only during their own action, preventing cross-button visual flashing
+
+### Technical
+
+- `preact-render-to-string@^6.6.7` added as devDependency
+- Build pipeline now runs two stages: prerender (Vite SSR) then client build (Vite)
+- See `docs/003-clipboard-copy-event.md` for clipboard implementation rationale
+
 ## 1.1.0 - 2026-04-06
 
 ### Features
